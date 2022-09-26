@@ -1,0 +1,7 @@
+Matplotlib试着让简单的事情更加简单，困难的事情变得可能，而Seaborn就是让困难的东西更加简单。
+
+seaborn是针对统计绘图的，一般来说，seaborn能满足数据分析90%的绘图需求。
+
+Seaborn其实是在matplotlib的基础上进行了更高级的API封装，从而使得作图更加容易，在大多数情况下使用seaborn就能做出很具有吸引力的图，应该把Seaborn视为matplotlib的补充，而不是替代物。
+
+用matplotlib最大的困难是其默认的各种参数，而Seaborn则完全避免了这一问题。
