@@ -1,0 +1,329 @@
+## 1 图像增广
+图像增广在对训练图像进行一系列的随机变化之后，生成相似但不同的训练样本，从而扩大了训练集的规模。此外，应用图像增广的原因是，随机改变训练样本可以减少模型对某些属性的依赖，从而提高模型的泛化能力。例如，我们可以以不同的方式裁剪图像，使感兴趣的对象出现在不同的位置，减少模型对于对象出现位置的依赖。我们还可以调整亮度、颜色等因素来降低模型对颜色的敏感度。可以说，图像增广技术对于AlexNet的成功是必不可少的。在本节中，我们将讨论这项广泛应用于计算机视觉的技术。
+```python
+import torch
+import torchvision
+from torch import nn
+from d2l import torch as d2l
+from torchvision import transforms
+```
+
+### 1.1 常用的图像增广方法
+下面将使用尺寸为$400\times 500$的图像作为示例，对常用图像增广方法进行探索。
+```python
+d2l.set_figsize()
+img = d2l.Image.open('./img/cat1.jpg')
+d2l.plt.imshow(img)
+```
+
+<img src="https://img-blog.csdnimg.cn/976ad956655f45b19c576ad0c3a49785.png#pic_center" width=36%>
+
+大多数图像增广方法都具有一定的随机性。为了便于观察图像增广的效果，我们下面定义辅助函数`apply`。此函数在输入图像`img`上多次运行图像增广方法`aug`并显示所有结果。
+```python
+def apply(img, aug, num_rows=2, num_cols=4, scale=1.5):
+    Y = [aug(img) for _ in range(num_rows * num_cols)]
+    d2l.show_images(Y, num_rows, num_cols, scale=scale)
+```
+
+
+**1. 翻转和裁剪**
+接下来，我们使用`transforms`模块来创建`RandomFlipLeftRight`实例，这样就各有50%的几率使图像向左或向右翻转。
+
+```python
+apply(img, transforms.RandomHorizontalFlip())       # 左右翻转
+```<img src="https://img-blog.csdnimg.cn/d53f0dcdbdf647b39d2cbfe2bbdef7d1.png#pic_center" width=36%>
+
+[**上下翻转图像**]不如左右图像翻转那样常用。但是，至少对于这个示例图像，上下翻转不会妨碍识别。接下来，我们创建一个`RandomFlipTopBottom`实例，使图像各有50%的几率向上或向下翻转。
+
+```python
+apply(img, transforms.RandomVerticalFlip())         # 上下翻转
+```
+<img src="https://img-blog.csdnimg.cn/7825f18331b34e8abce445f559db9b3d.png#pic_center" width=36%>
+
+在我们使用的示例图像中，猫位于图像的中间，但并非所有图像都是这样。在卷积神经网络部分，我们知道汇聚层具有双重目的：降低卷积层对目标位置的敏感性，同时降低对空间降采样表示的敏感性。另外，我们可以通过对图像进行随机裁剪，使物体以不同的比例出现在图像的不同位置。这也可以降低模型对目标位置的敏感性。
+
+在下面的代码中，我们[**随机裁剪**]一个面积为原始面积10%到100%的区域，该区域的宽高比从0.5到2之间随机取值。然后，区域的宽度和高度都被缩放到200像素。在本节中（除非另有说明），$a$和$b$之间的随机数指的是在区间$[a, b]$中通过均匀采样获得的连续值。
+```python
+shape_aug = transforms.RandomResizedCrop((200, 200), scale=(0.1, 1), ratio=(0.5, 2))
+apply(img, shape_aug)
+```
+<img src="https://img-blog.csdnimg.cn/a8677c67c6d2498b83abe224331b8d0c.png#pic_center" width=36%>
+
+**2. 改变颜色**
+另一种增广方法是改变颜色。我们可以改变图像颜色的四个方面：亮度、对比度、饱和度和色调。在下面的示例中，我们[**随机更改图像的亮度**]，随机值为原始图像的50%（$1-0.5$）到150%（$1+0.5$）之间。
+
+```python
+apply(img, transforms.ColorJitter(brightness=0.5, contrast=0, hue=0))
+```
+
+<img src="https://img-blog.csdnimg.cn/98f32f521cb44441b2bd09a3e703adeb.png#pic_center" width=36%>
+
+同样，我们可以[**随机更改图像的色调**]。
+
+```python
+apply(img, transforms.ColorJitter(brightness=0, contrast=0, saturation=0, hue=0.5))
+```
+
+<img src="https://img-blog.csdnimg.cn/4a5cbc1c3fba483f95425d657c409da3.png#pic_center" width=36%>
+我们还可以创建一个`RandomColorJitter`实例，并设置如何同时[**随机更改图像的亮度（`brightness`）、对比度（`contrast`）、饱和度（`saturation`）和色调（`hue`）**]。
+```python
+color_aug = transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.5)
+apply(img, color_aug)
+```
+<img src="https://img-blog.csdnimg.cn/2412c6fa6d1e4a0d8b86b9450e0ef37d.png#pic_center" width=36%>
+
+
+
+
+**3. 结合多种图像增广方法**
+在实践中，我们将结合多种图像增广方法。比如，可以通过使用一个`Compose`实例来综合上面定义的不同的图像增广方法，并将它们应用到每个图像。
+```python
+augs = transforms.Compose([torchvision.transforms.RandomHorizontalFlip(), color_aug, shape_aug])
+apply(img, augs)
+```
+<img src="https://img-blog.csdnimg.cn/8c06b9dc6894425fb7786d4081651d23.png#pic_center" width=36%>
+
+
+### 1.2 使用图像增广进行训练
+让我们使用图像增广来训练模型。这里，使用CIFAR-10数据集，而不是之前使用的Fashion-MNIST数据集。这是因为Fashion-MNIST数据集中对象的位置和大小已被规范化，而CIFAR-10数据集中对象的颜色和大小差异更明显。CIFAR-10数据集中的前32个训练图像如下所示。
+```python
+all_images = torchvision.datasets.CIFAR10(train=True, root='../data', download=True)
+d2l.show_images([all_images[i][0] for i in range(32)], 4, 8, scale=0.8)
+```
+
+
+<img src="https://img-blog.csdnimg.cn/7af7175566f84704b54a6d70bea45953.png#pic_center" width=36%>
+
+为了在预测过程中得到确切的结果，我们通常对训练样本只进行图像增广，且在预测过程中不使用随机操作的图像增广。在这里，我们[**只使用最简单的随机左右翻转**]。此外，我们使用`ToTensor`实例将一批图像转换为深度学习框架所要求的格式，即形状为（批量大小，通道数，高度，宽度）的32位浮点数，取值范围为0到1。
+```python
+from torch.utils.data import DataLoader
+from torchvision import datasets
+train_augs = transforms.Compose([transforms.RandomHorizontalFlip(), transforms.ToTensor()])
+test_augs = transforms.Compose([transforms.ToTensor()])
+```
+
+接下来，我们[**定义一个辅助函数，以便于读取图像和应用图像增广**]。PyTorch数据集提供的`transform`函数应用图像增广来转化图像。
+
+```python
+def load_cifar10(is_train, augs, batch_size):
+    dataset = datasets.CIFAR10(root="../data", train=is_train, transform=augs, download=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=is_train, num_workers=d2l.get_dataloader_workers())
+    return dataloader
+```
+多GPU训练
+
+
+```python
+def train_batch_ch13(net, X, y, loss, trainer, devices):
+    """用多GPU进行小批量训练"""
+    if isinstance(X, list):
+        X = [x.to(devices[0]) for x in X]
+    else:
+        X = X.to(devices[0])
+    y = y.to(devices[0])
+    net.train()
+    trainer.zero_grad()
+    pred = net(X)
+    l = loss(pred, y)
+    l.sum().backward()
+    trainer.step()
+    train_loss_sum = l.sum()
+    train_acc_sum = d2l.accuracy(pred, y)
+    return train_loss_sum, train_acc_sum
+```
+
+```python
+def train_ch13(net, train_loader, test_loader, loss, trainer, num_epochs, devices=d2l.try_all_gpus()):
+    """用多GPU进行模型训练"""
+    timer, num_batches = d2l.Timer(), len(train_loader)
+    animator = d2l.Animator(xlabel='epoch', xlim=[1, num_epochs], ylim=[0, 1], legend=['train loss', 'train acc', 'test acc'])
+    net = nn.DataParallel(net, device_ids=devices).to(devices[0])
+    for epoch in range(num_epochs):
+        # 4个维度：储存训练损失，训练准确度，实例数，特点数
+        metric = d2l.Accumulator(4)
+        for i, (features, labels) in enumerate(train_loader):
+            timer.start()
+            l, acc = train_batch_ch13(net, features, labels, loss, trainer, devices)
+            metric.add(l, acc, labels.shape[0], labels.numel())
+            timer.stop()
+            if (i+1) % (num_batches // 5) == 0 or i == num_batches - 1:
+                animator.add(epoch + (i + 1) / num_batches, (metric[0] / metric[2], metric[1]/metric[3], None))
+        test_acc = d2l.evaluate_accuracy_gpu(net, test_loader)
+        animator.add(epoch+1, (None, None, test_acc))
+    print(f'loss {metric[0] / metric[2]:.3f}, train acc {metric[1] / metric[3]:.3f}, test acc {test_acc:.3f}')
+    print(f'{metric[2] * num_epochs / timer.sum():.1f} examples/sec on {str(devices)}')
+```
+
+现在，我们可以[**定义`train_with_data_aug`函数，使用图像增广来训练模型**]。该函数获取所有的GPU，并使用Adam作为训练的优化算法，将图像增广应用于训练集，最后调用刚刚定义的用于训练和评估模型的`train_ch13`函数。
+
+```python
+batch_size, devices, net = 256, d2l.try_all_gpus(), d2l.resnet18(10, 3)
+def init_weights(m):
+    if type(m) in [nn.Linear, nn.Conv2d]:
+        nn.init.xavier_uniform_(m.weight)
+
+net.apply(init_weights)
+def train_with_data_aug(train_augs, test_augs, net, lr=0.001):
+    train_loader = load_cifar10(True, train_augs, batch_size)
+    test_loader = load_cifar10(False, test_augs, batch_size)
+    loss = nn.CrossEntropyLoss(reduction='none')
+    trainer = torch.optim.Adam(net.parameters(), lr=lr)
+    train_ch13(net, train_loader, test_loader, loss, trainer, 10, devices)
+```
+下面使用基于随机左右翻转的图像增广来[**训练模型**]。
+
+```python
+train_with_data_aug(train_augs, test_augs, net)
+```
+
+<img src="https://img-blog.csdnimg.cn/4ae1bd022fed49d6b97180273b742659.png#pic_center" width=36%>
+
+
+## 2 微调
+
+*迁移学习*（transfer learning）将从*源数据集*学到的知识迁移到*目标数据集*。例如，尽管ImageNet数据集中的大多数图像与使用的数据集无关，但在此数据集上训练的模型可能会提取更通用的图像特征，这有助于识别边缘、纹理、形状和对象组合。这些类似的特征也可能有效地识别目标对象。
+
+### 2.1 步骤
+迁移学习中的常见技巧:*微调*（fine-tuning）。微调包括以下四个步骤：
+1. 在源数据集（例如ImageNet数据集）上预训练神经网络模型，即*源模型*。
+1. 创建一个新的神经网络模型，即*目标模型*。这将复制源模型上的所有模型设计及其参数（输出层除外）。我们假定这些模型参数包含从源数据集中学到的知识，这些知识也将适用于目标数据集。我们还假设源模型的输出层与源数据集的标签密切相关；因此不在目标模型中使用该层。
+1. 向目标模型添加输出层，其输出数是目标数据集中的类别数。然后随机初始化该层的模型参数。
+1. 在目标数据集（如椅子数据集）上训练目标模型。输出层将从头开始进行训练，而所有其他层的参数将根据源模型的参数进行微调。
+
+
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/ed14a83151374b67966bdb347b74cb3b.png#pic_center"> <br> <div style="color:orange; border-bottom: 1px solid #d9d9d9; display: inline-block; color: #999; padding: 2px;">微调</div> </center>
+
+当目标数据集比源数据集小得多时，微调有助于提高模型的泛化能力。
+
+### 2.2 热狗识别
+下面通过具体案例演示微调：热狗识别。我们将在一个小型数据集上微调ResNet模型。该模型已在ImageNet数据集上进行了预训练。这个小型数据集包含数千张包含热狗和不包含热狗的图像，我们将使用微调模型来识别图像中是否包含热狗。
+
+```python
+import os
+import torch
+import torchvision
+from torch import nn
+from d2l import torch as d2l
+from torchvision import datasets
+from torchvision import transforms
+from torch.utils.data import DataLoader
+```
+
+1. 获取数据集
+
+我们使用的[**热狗数据集来源于网络**]。该数据集包含1400张热狗的“正类”图像，以及包含尽可能多的其他食物的“负类”图像。含着两个类别的1000张图片用于训练，其余的则用于测试。
+
+解压下载的数据集，我们获得了两个文件夹`hotdog/train`和`hotdog/test`。这两个文件夹都有`hotdog`（有热狗）和`not-hotdog`（无热狗）两个子文件夹，子文件夹内都包含相应类的图像。
+
+```python
+d2l.DATA_HUB['hotdog'] = (d2l.DATA_URL + 'hotdog.zip', 'fba480ffa8aa7e0febbb511d181409f899b9baa5')
+data_dir = d2l.download_extract('hotdog')
+```
+我们创建两个实例来分别读取训练和测试数据集中的所有图像文件。
+
+```python
+train_imgs = datasets.ImageFolder(os.path.join(data_dir, 'train'))
+test_imgs = datasets.ImageFolder(os.path.join(data_dir, 'test'))
+```
+
+下面显示了前8个正类样本图片和最后8张负类样本图片。正如你所看到的，[**图像的大小和纵横比各有不同**]。
+
+```python
+hotdogs = [train_imgs[i][0] for i in range(8)]
+not_hotdogs = [train_imgs[-i-1][0] for i in range(8)]
+d2l.show_images(hotdogs + not_hotdogs, 2, 8, scale=1.4)
+```
+2. 数据增广
+
+在训练期间，我们首先从图像中裁切随机大小和随机长宽比的区域，然后将该区域缩放为$224 \times 224$输入图像。在测试过程中，我们将图像的高度和宽度都缩放到256像素，然后裁剪中央$224 \times 224$区域作为输入。此外，对于RGB（红、绿和蓝）颜色通道，我们分别*标准化*每个通道。具体而言，该通道的每个值减去该通道的平均值，然后将结果除以该通道的标准差。
+
+
+```python
+# 使用RGB通道的均值和标准差，以标准化每个通道
+normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+train_augs = transforms.Compose([
+    transforms.RandomResizedCrop(224), 
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize])
+test_augs = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    normalize])
+```
+
+3. 定义和初始化模型
+我们使用在ImageNet数据集上预训练的ResNet-18作为源模型。在这里，我们指定`pretrained=True`以自动下载预训练的模型参数。如果你首次使用此模型，则需要连接互联网才能下载。
+预训练的源模型实例包含许多特征层和一个输出层`fc`。此划分的主要目的是促进对除输出层以外所有层的模型参数进行微调。下面给出了源模型的成员变量`fc`。
+
+
+```python
+pretrained_net = torchvision.models.resnet18(pretrained=True)
+pretrained_net.fc
+```
+
+
+
+<img src="https://img-blog.csdnimg.cn/60ec98ee02af472faebe4c221c4494a5.png#pic_center" width=36%>
+
+在ResNet的全局平均汇聚层后，全连接层转换为ImageNet数据集的1000个类输出。
+之后，我们构建一个新的神经网络作为目标模型。
+它的定义方式与预训练源模型的定义方式相同，只是最终层中的输出数量被设置为目标数据集中的类数（而不是1000个）。
+
+在下面的代码中，目标模型`finetune_net`中成员变量`features`的参数被初始化为源模型相应层的模型参数。
+由于模型参数是在ImageNet数据集上预训练的，并且足够好，因此通常只需要较小的学习率即可微调这些参数。
+
+成员变量`output`的参数是随机初始化的，通常需要更高的学习率才能从头开始训练。
+假设`Trainer`实例中的学习率为$\eta$，我们将成员变量`output`中参数的学习率设置为$10\eta$。
+
+
+```ptython
+finetune_net = torchvision.models.resnet18(pretrained=True)
+finetune_net.fc = nn.Linear(finetune_net.fc.in_features, 2)
+nn.init.xavier_uniform_(finetune_net.fc.weight)
+```
+
+4. 微调模型
+
+首先，我们定义了一个训练函数`train_fine_tuning`，该函数使用微调，因此可以多次调用。
+
+```python
+def train_fine_tuning(net, learning_rate, batch_size=128, num_epochs=5, param_group=True):
+    train_loader = DataLoader(datasets.ImageFolder(os.path.join(data_dir, 'train'), transform=train_augs), batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(datasets.ImageFolder(os.path.join(data_dir, 'test'), transform=test_augs), batch_size=batch_size)
+    devices = d2l.try_all_gpus()
+    loss = nn.CrossEntropyLoss(reduction="none")
+    # 如果param_group=True，输出层中的模型参数将使用十倍的学习率
+    if param_group:
+        params_1x = [param for name, param in net.named_parameters() if name not in ["fc.weight", "fc.bias"]]
+        trainer = torch.optim.SGD([{'params': params_1x},
+                                   {'params': net.fc.parameters(),
+                                   'lr': learning_rate * 10}],
+                                   lr=learning_rate, weight_decay=0.001)
+    else:
+        trainer = torch.optim.SGD(net.parameters(), lr=learning_rate, weight_decay=0.001)
+    d2l.train_ch13(net, train_loader, test_loader, loss, trainer, num_epochs, devices)
+```
+我们[**使用较小的学习率**]，通过*微调*预训练获得的模型参数。
+```python
+train_fine_tuning(finetune_net, 5e-5)
+```
+
+
+
+
+<img src="https://img-blog.csdnimg.cn/9557ffcdcdfb4a6b8e7acee154e679f4.png#pic_center" width=36%>
+
+[**为了进行比较，**]我们定义了一个相同的模型，但是将其(**所有模型参数初始化为随机值**)。由于整个模型需要从头开始训练，因此我们需要使用更大的学习率。
+
+
+```python
+scratch_net = torchvision.models.resnet18()
+scratch_net.fc = nn.Linear(scratch_net.fc.in_features, 2)
+train_fine_tuning(scratch_net, 5e-4, param_group=False)
+```
+
+<img src="https://img-blog.csdnimg.cn/693efcb1afad419d980e1d4fd5eaf511.png#pic_center" width=36%>
+
+意料之中，微调模型往往表现更好，因为它的初始参数值更有效。

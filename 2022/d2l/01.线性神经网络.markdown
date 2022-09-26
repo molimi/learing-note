@@ -1,0 +1,548 @@
+本篇主要学习《动手学深度学习》[第三章线性神经网络](http://zh-v2.d2l.ai/chapter_linear-networks/linear-regression-scratch.html)线性回归的实现。
+
+## 1 线性回归
+### 1.1 从零开始实现
+1. 导入需要的库
+```python
+import random
+import torch
+from d2l import torch as d2l
+```
+2. 生成数据集
+这里将根据带有噪声的线性模型构造⼀个⼈造数据集。我们的任务是使用这个有限样本的数据集来恢复这个模型的参数。我们将使⽤低维数据，这样可以很容易地将其可视化。在下⾯的代码中，我们⽣成⼀个包含1000个样本的数据集，每个样本包含从标准正态分布中采样的2个特征。我们的合成数据集是⼀个矩阵$X\in \mathbb{R}^{1000\times 2}$。
+
+我们使用线性模型参数$\pmb{w}=[2, -3.4]^T、b=4.2$和噪声项$\epsilon$生成数据集及其标签：
+$$y=\pmb{Xw}+b+\epsilon$$
+这里可以将$\epsilon$视为模型预测和标签时的潜在观测误差。在这⾥我们认为标准假设成⽴，即$\epsilon$服从均值为0的正态分布。为了简化问题，我们将标准差设为0.01。下⾯的代码⽣成合成数据集。
+```python
+# 合成数据集
+def synthetic_data(w, b, num_examples):
+    """生成y=Xw+b+ϵ的数据"""
+    X = torch.normal(0, 1, (num_examples, len(w)))  # 样本数组
+    y = torch.matmul(X, w) + b
+    y += torch.normal(0, 0.01, y.shape)
+    return X, y.reshape(-1, 1)
+```
+```python
+true_w = torch.tensor([2, -3.4])
+true_b = 4.2
+features, labels = synthetic_data(true_w, true_b, 1000)
+```
+注意，`features`中的每⼀⾏都包含⼀个⼆维数据样本，`labels`中的每⼀⾏都包含⼀维标签值（⼀个标量）。
+```python
+print("features:", features[0], "\nlabel:", labels[0])
+```
+> features: tensor([0.0555, 0.9877]) 
+> label: tensor([0.9647])
+通过⽣成第⼆个特征`features[:, 1]`和`labels`的散点图，可以直观观察到两者之间的线性关系。
+```python
+d2l.set_figsize()
+d2l.plt.scatter(features[:, 1].detach().numpy(), labels.detach().numpy(), 1)
+```
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/43dfa6612c8243b9b138177725c2638d.png#pic_center
+"></center>
+
+3. 读取数据集
+训练模型时要对数据集进⾏遍历，每次抽取⼀小批量样本，并使⽤它们来更新我们的模型。由于这个过程是训练机器学习算法的基础，所以有必要定义⼀个函数，该函数能打乱数据集中的样本并以小批量⽅式获取数据。
+在下⾯的代码中，我们定义⼀个data_iter函数，该函数接收批量⼤小、特征矩阵和标签向量作为输⼊，⽣成⼤小为batch_size的小批量。每个小批量包含⼀组特征和标签。
+```python
+def data_iter(batch_size, features, labels):
+    num_examples = len(features)
+    indices = list(range(num_examples))
+    # 这些样本是随机读取的，没有特定的顺序
+    random.shuffle(indices) # 随机打乱顺序
+    for i in range(0, num_examples, batch_size):
+        batch_indices = torch.tensor(indices[i: min(i+batch_size, num_examples)])   # 考虑最后一组不够一个批量
+        yield features[batch_indices], labels[batch_indices]    # 生成器
+```
+通常，我们利⽤GPU并⾏运算的优势，处理合理⼤小的“小批量”。每个样本都可以并⾏地进⾏模型计算，且每个样本损失函数的梯度也可以被并⾏计算。GPU可以在处理⼏百个样本时，所花费的时间不⽐处理⼀个样本时多太多。
+
+读取第⼀个小批量数据样本并打印。每个批量的特征维度显⽰批量⼤小和输⼊特征数。同样的，批量的标签形状与batch_size相等。
+```python
+batch_size = 10
+for X, y in data_iter(batch_size, features, labels):
+    print(X, '\n', y)
+    break
+```
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/3d24c781ea784676a43c88442730c37d.png#pic_center"></center>
+当我们运⾏迭代时，我们会连续地获得不同的小批量，直⾄遍历完整个数据集。上⾯实现的迭代对于教学来说很好，但它的执⾏效率很低，可能会在实际问题上陷⼊⿇烦。例如，它要求我们将所有数据加载到内存中，并执⾏⼤量的随机内存访问。<font color=#9900CC><strong>在深度学习框架中实现的内置迭代器效率要⾼得多，它可以处理存储在⽂件中的数据和数据流提供的数据。</strong></font>
+
+4. 初始化模型参数
+在我们开始⽤小批量随机梯度下降优化我们的模型参数之前，我们需要先有⼀些参数。在下⾯的代码中，我们通过从均值为0、标准差为0.01的正态分布中采样随机数来初始化权重，并将偏置初始化为0。
+```python
+w = torch.normal(0, 0.01, size=(2, 1), requires_grad=True)
+b = torch.zeros(1, requires_grad=True)
+```
+在初始化参数之后，我们的任务是更新这些参数，直到这些参数⾜够拟合我们的数据。每次更新都需要计算损失函数关于模型参数的梯度。有了这个梯度，我们就可以向减小损失的⽅向更新每个参数
+
+5. 定义模型
+要计算线性模型的输出，我们只需计算输⼊特征$\pmb{X}$和模型权重$\pmb{w}$的矩阵-向量乘法后加上偏置$b$。注意，上⾯的$\pmb{Xw}$是⼀个向量，而$b$是⼀个标量。这里会自动触发广播机制。
+```python
+def linreg(X, w, b):   
+    """线性回归模型"""
+    return torch.matmul(X, w) + b
+```
+6. 定义损失函数
+在我们开始考虑如何⽤模型拟合（fit）数据之前，我们需要确定⼀个拟合程度的度量。损失函数（loss function）能够量化⽬标的实际值与预测值之间的差距。通常我们会选择⾮负数作为损失，且数值越小表⽰损失越小，完美预测时的损失为0。回归问题中最常⽤的损失函数是平⽅误差函数。当样本$i$的预测值为$\hat{y}^{(i)}$，其相应的真实标签为$y^{(i)}$时，平⽅误差可以定义为以下公式：
+$$l^{(i)}(\pmb{w}, b)=\frac{1}{2}(\hat{y}^{(i)}-{y}^{(i)})^2$$
+常数$\frac{1}{2}$不会带来本质的差别，但这样在形式上稍微简单⼀些（因为当我们对损失函数求导后常数系数为1)。
+```python
+def squared_loss(y_hat, y): 
+    """均方损失"""
+    return (y_hat - y) ** 2 /2
+```
+
+7. 定义优化算法
+在每⼀步中，使⽤从数据集中随机抽取的⼀个小批量，然后根据参数计算损失的梯度。接下来，朝着减少损失的⽅向更新我们的参数。下⾯的函数实现小批量随机梯度下降更新。该函数接受模型参数集合、学习速率和批量⼤小作为输⼊。每⼀步更新的⼤小由学习速率lr决定。因为我们计算的损失是⼀个批量样本的总和，所以我们⽤批量⼤小（batch_size）来规范化步⻓，这样步⻓⼤小就不会取决于我们对批量⼤小的选择。
+```python
+def sgd(params, lr, batch_size):
+    """小批量随机梯度下降"""
+    with torch.no_grad():
+        for param in params:
+            param -= lr * param.grad / batch_size
+            param.grad.zero_() 
+```
+8. 训练
+选练过成为：在每次迭代中，我们读取⼀小批量训练样本，并通过我们的模型来获得⼀组预测。计算完损失后，我们开始反向传播，存储每个参数的梯度。最后，我们调⽤优化算法sgd来更新模型参数。循环过程如下：
+- 初始化参数
+- 重复以下训练，直到完成
+    - 计算梯度 $$\mathbf{g} \leftarrow \partial_{(\mathbf{w}, b)} \frac{1}{|\mathcal{B}|} \sum_{i \in \mathcal{B}} l\left(\mathbf{x}^{(i)}, y^{(i)}, \mathbf{w}, b\right)$$
+    - 更新参数 $(\pmb{w}, b) \leftarrow (\pmb{w}, b) - \eta \mathbf{g}$
+
+在每个迭代周期（epoch）中，我们使⽤data_iter函数遍历整个数据集，并将训练数据集中所有样本都使⽤⼀次（假设样本数能够被批量⼤小整除）。这⾥的迭代周期个数num_epochs和学习率lr都是超参数，分别设为3和0.03。设置超参数很棘⼿，需要通过反复试验进⾏调整。
+```python
+lr = 0.03           # 学习率
+num_epoches = 3     # 迭代次数
+net = linreg        # 模型
+loss = squared_loss # 损失
+```
+
+
+```python
+for epoch in range(num_epoches):
+    for X, y in data_iter(batch_size, features, labels):
+        l = loss(net(X, w, b), y)   # X和y的小批量损失
+        # l的形状是(batch_size, 1)，而不是一个标量，l中所有的元素被加到一起
+        l.sum().backward()  # 计算关于[w, b]的梯度
+        sgd([w, b], lr, batch_size)     # 使用参数的梯度更新参数
+    with torch.no_grad():
+        train_l = loss(net(features, w, b), labels)
+        print(f'epoch {epoch+1}, loss {float(train_l.mean()):f}')
+```
+> epoch 1, loss 0.042979
+> epoch 2, loss 0.000169
+> epoch 3, loss 0.000052
+我们可以通过⽐较真实参数和通过训练学到的参数来评估训练的成功程度。
+```python
+print(f'w的估计误差：{true_w-w.reshape(true_w.shape)}')
+print(f'b的估计误差：{true_b-b}')
+```
+> w的估计误差：tensor([ 1.5374e-03, -1.6689e-06], grad_fn=<SubBackward0>)
+> b的估计误差：tensor([0.0009], grad_fn=<RsubBackward1>)
+
+温馨提示：在机器学习中，我们通常不太关⼼恢复真正的参数，而更关⼼如何⾼度准确预测参数。幸运的是，即使是在复杂的优化问题上，随机梯度下降通常也能找到⾮常好的解。其中⼀个原因是，<font color=#9900CC><strong>在深度⽹络中存在许多参数组合能够实现⾼度精确的预测。</strong></font>
+
+
+### 1.2 简洁实现
+1. 生成数据集
+```python
+import numpy as np
+import torch
+from torch.utils import data
+from d2l import torch as d2l
+
+true_w = torch.tensor([2, -3.4])
+true_b = 4.2
+features, labels = d2l.synthetic_data(true_w, true_b, 1000)
+```
+
+
+2. 读取数据集
+```python
+def load_array(data_arrays, batch_size, is_train=True):
+    """构造一个PyTorch数据迭代器"""
+    dataset = data.TensorDataset(*data_arrays)
+    return data.DataLoader(dataset, batch_size, shuffle=is_train)
+
+batch_size = 20
+data_iter = load_array((features, labels), batch_size)
+next(iter(data_iter))
+```
+
+3. 定义模型
+在PyTorch中，全连接层在Linear类中定义。值得注意的是，我们将两个参数传递到nn.Linear中。第⼀个指定输⼊特征形状，即2，第⼆个指定输出特征形状，输出特征形状为单个标量，因此为1。
+```python
+from torch import nn
+net = nn.Sequential(nn.Linear(2, 1))
+```
+4. 初始化模型参数
+通过`net[0]`选择⽹络中的第⼀个图层，然后使⽤`weight.data`和`bias.data`⽅法访问参数。我们还可以使⽤替换⽅法`normal_`和`fill_`来重写参数值。
+```python
+net[0].weight.data.normal_(0, 0.1)
+net[0].bias.data.fill_(0)
+```
+5. 定义损失函数
+计算均⽅误差使⽤的是MSELoss类，也称为平⽅L2范数。默认情况下，它返回所有样本损失的平均值。
+```python
+criterion = nn.MSELoss()
+```
+
+6. 定义优化算法
+小批量随机梯度下降算法是⼀种优化神经⽹络的标准⼯具，PyTorch在optim模块中实现了该算法的许多变种。当我们实例化⼀个SGD实例时，我们要指定优化的参数（可通过net.parameters()从我们的模型中获得）以及优化算法所需的超参数字典。小批量随机梯度下降只需要设置lr值，这⾥设置为0.03。
+```python
+optimizer = torch.optim.SGD(net.parameters(), lr=0.03)
+```
+
+7. 训练
+在每个迭代周期⾥，我们将完整遍历一次数据集（train_data），不停地从中获取一个小批量的输⼊和相应的标签。对于每⼀个小批量，我们会进⾏以下步骤:
+• 通过调⽤`net(X)`⽣成预测并计算损失loss（前向传播）。
+• 通过进⾏反向传播来计算梯度。
+• 通过调⽤优化器来更新模型参数
+
+```python
+num_epochs = 3
+for epoch in range(num_epochs):
+    for X, y in data_iter:
+        # forwad
+        output = net(X)
+        loss = criterion(output, y)
+        # backward
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+    l = criterion(net(features), labels)
+    print(f'epoch {epoch+1}, loss {l:f}')
+```
+> epoch 1, loss 0.075949
+> epoch 2, loss 0.000290
+> epoch 3, loss 0.000103
+
+下⾯我们⽐较⽣成数据集的真实参数和通过有限数据训练获得的模型参数。要访问参数，我们⾸先从net访问所需的层，然后读取该层的权重和偏置。正如在从零开始实现中⼀样，我们估计得到的参数与⽣成数据的真实参数⾮常接近。
+```python
+w = net[0].weight.data
+print('w的估计误差：', true_w-w.reshape(true_w.shape))
+b = net[0].bias.data
+print('b的估计误差：', true_b-b)
+```
+> w的估计误差： tensor([ 8.4531e-04, -4.3392e-05])
+> b的估计误差： tensor([0.0007])
+
+
+## 2 softmax回归
+### 2.1 数据集
+1. 导入库
+MNIST数据集是图像分类中⼴泛使⽤的数据集之⼀，但作为基准数据集过于简单。我们
+将使⽤类似但更复杂的Fashion-MNIST数据集。
+```python
+import torch
+from torchvision import datasets
+from torch.utils import data
+from torchvision import transforms
+from d2l import torch as d2l
+import numpy as np
+import gzip
+```
+
+2. 读取数据集
+我们可以通过框架中的内置函数将Fashion-MNIST数据集下载并读取到内存中。
+```python
+# 读取数据集，在线下载
+mnist_train = datasets.FashionMNIST(root="../data", train=True, transform=transforms.ToTensor(), download=True)
+mnist_test = datasets.FashionMNIST(root="../data", train=False, transform=transforms.ToTensor(), download=True)
+print(len(mnist_train, mnist_test))     # （60000， 10000）
+```
+有的小伙伴觉得本地下载太慢，或者老是失败，那我们可以直接下载到本地，然后自己导入数据集，如下：
+```python
+class FashionMnistDataset(data.Dataset):
+    """读取数据、初始化数据"""
+    def __init__(self, folder, data_name, label_name, transform=None):
+        (train_set, train_labels) = load_data(folder, data_name, label_name)
+        self.train_set = train_set
+        self.train_labels = train_labels
+        self.transform = transform
+
+    def __getitem__(self, index):
+        img, target = self.train_set[index], int(self.train_labels[index])
+        if self.transform is not None:
+            img = self.transform(img)
+        return img, target
+
+    def __len__(self):
+        return len(self.train_set)
+
+
+def load_data(data_folder, data_name, label_name):
+    with gzip.open(os.path.join(data_folder, label_name), 'rb') as labpath:
+        y_train = np.frombuffer(labpath.read(), np.uint8, offset=8)
+
+    with gzip.open(os.path.join(data_folder, data_name), 'rb') as imgpath:
+        x_train = np.frombuffer(imgpath.read(), np.uint8,
+                                offset=16).reshape(len(y_train), 28, 28)
+
+    return (x_train, y_train)
+```
+```python
+# 通过ToTensor实例将图像数据从PIL类型变换成32位浮点数格式，
+# 并除以255使得所有像素的数值均在0到1之间
+mnist_train = FashionMnistDataset("../data/FashionMNIST", "train-images-idx3-ubyte.gz", "train-labels-idx1-ubyte.gz", transform=transforms.ToTensor())
+mnist_test = FashionMnistDataset("../data/FashionMNIST", "t10k-images-idx3-ubyte.gz", "t10k-labels-idx1-ubyte.gz", transform=transforms.ToTensor())
+print(len(mnist_train), len(mnist_test))
+```
+
+Fashion-MNIST由10个类别的图像组成，每个类别由训练数据集（train dataset）中的6000张图像和测试数据集（test dataset）中的1000张图像组成。因此，训练集和测试集分别包含60000和10000张图像。测试数据集不会⽤于训练，只⽤于评估模型性能。
+
+每个输⼊图像的⾼度和宽度均为28像素。数据集由灰度图像组成，其通道数为1。
+```python
+print(mnist_train[0][0].shape)      # torch.Size([1, 28, 28])
+```
+
+Fashion-MNIST中包含的10个类别，分别为t-shirt（T恤）、trouser（裤⼦）、pullover（套衫）、dress（连⾐裙）、coat（外套）、sandal（凉鞋）、shirt（衬衫）、sneaker（运动鞋）、bag（包）和ankle boot（短靴）。以下函数⽤于在数字标签索引及其⽂本名称之间进⾏转换。
+
+```python
+def get_fashion_mnist_labels(labels):
+    """返回Fashion-MNIST数据集的文本标签"""
+    text_labels =['t-shirt', 'trouser', 'pullover', 'dress', 'coat', 'sandal', 'shirt', 'sneaker', 'bag', 'ankle boot']
+    return [text_labels[int(i)] for i in labels]    # 标签是浮点型的
+```
+下面创建一个函数可视化这些样本。
+```python
+def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
+    """绘制图像列表"""
+    figsize = (num_cols * scale, num_rows * scale)
+    _, axes = d2l.plt.subplots(num_rows, num_cols, figsize=figsize)
+    axes = axes.flatten()   # 将axes由n*m的Axes组展平成1*nm的Axes组
+    for i, (ax, img) in enumerate(zip(axes, imgs)):
+        if torch.is_tensor(img):    # 图片张量
+            ax.imshow(img.numpy())
+        else:    # PIL图片
+            ax.imshow(img)
+        ax.axes.get_xaxis().set_visible(False)  # 不需要坐标轴
+        ax.axes.get_yaxis().set_visible(False)
+        if titles:
+            ax.set_title(titles[i])
+    return axes
+```
+以下是训练数据集中前⼏个样本的图像及其相应的标签。
+```python
+X, y = next(iter(data.DataLoader(mnist_train, batch_size=20)))
+show_images(X.reshape(20, 28, 28), 2, 10, titles=get_fashion_mnist_labels(y))   # 由[20, 1, 28, 28]转换为[20, 28, 28]
+```
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/52a02a7de9a9462da8658529a37a99de.png#pic_center"></center>
+
+3. 读取小批量
+```python
+train_loader = data.DataLoader(mnist_train, batch_size=256, shuffle=True, num_workers=4)
+test_loader = data.DataLoader(mnist_test, batch_size=256, shuffle=True, num_workers=4)
+timer = d2l.Timer()
+for X, y in train_loader:
+    continue
+print(f'{timer.stop():.2f} sec')        # 0.66 sec
+```
+### 2.2 从零实现
+
+1. 初始化模型参数
+和之前线性回归的例⼦⼀样，这⾥的每个样本都将⽤固定⻓度的向量表⽰。原始数据集中的每个样本都是28×28的图像。在本节中，我们将展平每个图像，把它们看作⻓度为784的向量。
+
+在softmax回归中，我们的输出与类别⼀样多。因为我们的数据集有10个类别，所以⽹络输出维度为10。因此，权重将构成⼀个784×10的矩阵，偏置将构成⼀个1×10的⾏向量。与线性回归⼀样，我们将使⽤正态分布初始化我们的权重$\pmb{W}$，偏置初始化为0。
+```python
+# 初始化模型参数
+num_inputs = 784
+num_outputs = 10
+
+W = torch.normal(0, 0.01, size=(num_inputs, num_outputs), requires_grad=True)
+b = torch.zeros(num_outputs, requires_grad=True)
+```
+
+2. 定义softmax操作
+实现softmax由三个步骤组成：（1）对每个项求幂（使⽤exp）；（2）对每⼀⾏求和（小批量中每个样本是⼀⾏），得到每个样本的规范化常数；（3）将每⼀⾏除以其规范化常数，确保结果的和为1。表达式如下：
+$$\operatorname{softmax}(\mathbf{X})_{i j}=\frac{\exp \left(\mathbf{X}_{i j}\right)}{\sum_{k} \exp \left(\mathbf{X}_{i k}\right)}$$
+```python
+def softmax(X):
+    X_exp = torch.exp(X)
+    partition = X_exp.sum(1, keepdim=True)
+    return X_exp / partition        # 触发广播机制
+```
+
+3. 定义模型
+下⾯的代码定义了输⼊如何通过⽹络映射到输出。注意，将数据传递到模型之前，我们使⽤reshape函数将每张原始图像展平为向量。
+```python
+def net(X):
+    return softmax(torch.matmul(X.reshape((-1, W.shape[0])), W) + b)
+```
+
+4. 定义损失函数
+```python
+# 交叉熵损失
+def cross_entropy(y_hat, y):
+    return -torch.log(y_hat[range(len(y_hat)), y])
+```
+5. 分类精度
+为了计算精度，我们执⾏以下操作。⾸先，如果y_hat是矩阵，那么假定第⼆个维度存储每个类的预测分数。我们使⽤argmax获得每⾏中最⼤元素的索引来获得预测类别。然后我们将预测类别与真实y元素进⾏⽐较。由于等式运算符“==”对数据类型很敏感，因此我们将y_hat的数据类型转换为与y的数据类型⼀致。结果是⼀个包含0（错）和1（对）的张量。最后，我们求和会得到正确预测的数量。
+```python
+def accuracy(y_hat, y):
+    """计算预测正确的数量"""
+    if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
+        y_hat = y_hat.argmax(axis=1)
+    cmp = y_hat.type(y.dtype) == y      # 讲y_hat的类型抓换位和y一样
+    return float(cmp.type(y.dtype).sum())
+```
+对于任意数据迭代器data_iter可访问的数据集，我们可以评估在任意模型net的精度。
+```python
+def evaluate_accuracy(net, data_iter):
+    """计算在指定数据集上模型的精度"""
+    if isinstance(net, torch.nn.Module):
+        net.eval()      # 将模型设置为评估模式
+    metric = Accumulator(2)
+    with torch.no_grad():
+        for X, y in data_iter:
+            metric.add(accuracy(net(X), y), y.numel())
+    return metric[0] / metric[1]
+```
+这⾥定义⼀个实⽤程序类Accumulator，⽤于对多个变量进⾏累加。在上⾯的evaluate_accuracy函数中，我们在Accumulator实例中创建了2个变量，分别⽤于存储正确预测的数量和预测的总数量。当我们遍历数据集时，两者都将随着时间的推移而累加。
+```python
+class Accumulator:
+    """在n个变量上累加"""
+    def __init__(self, n):
+        self.data = [0.0] * n
+    
+    def add(self, *args):
+        self.data = [a + float(b) for a, b in zip(self.data, args)]
+    
+    def reset(self):
+        self.data = [0.0] * len(self.data)
+
+    def __getitem__(self, idx):
+        return self.data[idx]
+```
+
+6. 训练
+⽤。⾸先，我们定义⼀个函数来训练⼀个迭代周期。请注意，updater是更新模型参数的常⽤函数，它接受批量⼤小作为参数。它可以是d2l.sgd函数，也可以是框架的内置优化函数。
+```python
+def train_epoch_ch3(net, train_loader, loss, updater):
+    """训练模型一个迭代周期"""
+    if isinstance(net, torch.nn.Module):
+        net.train()
+    # 训练损失总和、训练准确度总和、样本数
+    metric = Accumulator(3)
+    for X, y in train_loader:
+        # 计算梯度并更新参数
+        y_hat = net(X)
+        l = loss(y_hat, y)
+        if isinstance(updater, torch.optim.Optimizer):
+            # 使用PyTorch内置的优化器和损失函数
+            updater.zero_grad()
+            l.sum().backward()
+            updater.step()
+        else:
+            # 使用定制的优化器和损失函数
+            l.sum().backward()
+            updater(X.shape[0])
+        metric.add(float(l.sum()), accuracy(y_hat, y), y.numel())
+    # 返回训练损失和训练精度
+    return metric[0] / metric[2], metric[1] / metric[2]
+```
+在展⽰训练函数的实现之前，我们定义⼀个在动画中绘制数据的实⽤程序类Animator。
+```python
+# from IPython import display
+class Animator:
+    """在动画中绘制数据"""
+    def __init__(self, xlabel=None, ylabel=None, legend=None, xlim=None, ylim=None, xscale='linear', yscale='linear', fmts=('-', 'm--', 'g-.', 'r:'), nrows=1, ncols=1, figsize=(3.5, 2.5)):
+        # 增量地绘制多条线
+        if legend is None:
+            legend = []
+        d2l.use_svg_display()
+        self.fig, self.axes = d2l.plt.subplots(nrows, ncols, figsize=figsize)
+        if nrows * ncols == 1:
+            self.axes = [self.axes, ]
+
+        # 使用lambda函数捕获参数
+        self.config_axes = lambda: d2l.set_axes(self.axes[0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
+        self.X, self.Y, self.fmts = None, None, fmts
+
+    def add(self, x, y):
+        """向图表中添加多个数据点"""
+        if not hasattr(y, "__len__"):
+            y = [y]
+        n = len(y)
+        if not hasattr(x, "__len__"):
+            x = [x] * n
+        if not self.X:
+            self.X = [[] for _ in range(n)]
+        if not self.Y:
+            self.Y = [[] for _ in range(n)]
+        for i, (a, b) in enumerate(zip(x, y)):
+            if a is not None and b is not None:
+                self.X[i].append(a)
+                self.Y[i].append(b)
+        self.axes[0].cla()
+        for x, y, fmt in zip(self.X, self.Y, self.fmts):
+            self.axes[0].plot(x, y, fmt)
+        self.config_axes()
+        # display.display(self.fig)
+        # display.clear_output(wait=True)
+```
+下来我们实现⼀个训练函数，它会在train_iter访问到的训练数据集上训练⼀个模型net。该训练函数将会运⾏多个迭代周期（由num_epochs指定）。在每个迭代周期结束时，利⽤test_iter访问到的测试数据集对模型进⾏评估。我们将利⽤Animator类来可视化训练进度。
+```python
+def train_ch3(net, train_loader, test_loader, loss, num_epoches, updater):
+    """训练模型"""
+    animator = Animator(xlabel='epoch', xlim=[1, num_epoches], ylim=[0.3, 0.9], legend=['train loss', 'train acc', 'test acc'])
+    for epoch in range(num_epoches):
+        train_metrics = train_epoch_ch3(net, train_loader, loss, updater)
+        test_acc = evaluate_accuracy(net, test_loader)
+        animator.add(epoch+1, train_metrics + (test_acc,))
+    train_loss, train_acc = train_metrics
+    assert train_loss < 0.5, train_loss
+    assert train_acc <= 1 and train_acc > 0.7, train_acc
+    assert test_acc <= 1 and test_acc > 0.7, test_acc
+```
+现在，我们使用小批量梯度下降法来优化模型损失函数，设置学习率为0.1，训练模型10个迭代周期。请注意，迭代周期（num_epochs）和学习率（lr）都是可调节的超参数。通过更改它们的值，我们可以提⾼模型的分类精度。
+```python
+lr = 0.1
+def updater(batch_size):
+    return d2l.sgd([W, b], lr, batch_size)
+
+num_epoches = 10
+train_ch3(net, train_loader, test_loader, cross_entropy, num_epoches, updater)
+```
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/61ba0195a6ec45dbb2f52fe8d424579c.png#pic_center"></center>
+
+7. 预测
+现在训练已经完成，我们的模型已经准备好对图像进⾏分类预测。给定⼀系列图像，我们将⽐较它们的实际标签（⽂本输出的第⼀⾏）和模型预测（⽂本输出的第⼆⾏）。
+```python
+def predict_ch3(net, test_loader, n=6):
+    """预测标签"""
+    for X, y in test_loader:
+        break
+    trues = d2l.get_fashion_mnist_labels(y)
+    preds = d2l.get_fashion_mnist_labels(net(X).argmax(axis=1))
+    titles = [true+'\n' + pred for true, pred in zip(trues, preds)]
+    d2l.show_images(X[0:n].reshape((n, 28, 28)), 1, n, titles=titles[0:n])
+
+predict_ch3(net, test_loader)
+```
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/c89223e2b10344eeb1a756b2d04b28e4.png#pic_center"></center>
+
+### 2.2 简洁实现
+
+```python
+import torch
+from torch import nn
+from d2l import torch as d2l
+
+batch_size = 256
+# 在线性层前定义了展平层（flatten），来调整⽹络输⼊的形状
+net = nn.Sequential(nn.Flatten(), nn.Linear(784, 10))
+
+def init_weights(m):
+    if isinstance(m, nn.Linear):
+        nn.init.normal_(m.weight, std=0.01)
+net.apply(init_weights)
+
+loss = nn.CrossEntropyLoss()
+optimizer = torch.optim.SGD(net.parameters(), lr=0.1)
+
+num_epoches = 10
+d2l.train_ch3(net, train_loader, test_loader, loss, num_epoches, optimizer)
+```
+
+<center> <img style="border-radius: 0.3125em; box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" src="https://img-blog.csdnimg.cn/782655410f33414284d3f5d1d00d4ec8.png#pic_center"></center>
