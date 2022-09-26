@@ -1,0 +1,217 @@
+在前一节中介绍了数据库和SQL。正如所述，数据的所有存储、检索、管理和处理实际上是由数据库软件——DBMS（数据库管理系统）完成的。MySQL是一种DBMS，即它是一种数据库软件，由瑞典MySQL AB公司开发，目前属于Oracle公司。MySQL是一种关联数据库管理系统，关联数据库将数据保存在不同的表中，而不是将所有数据放在一个大仓库内，这样就增加了速度并提高了灵活性。
+
+MySQL在互联网公司使用率排名第一，主要有以下优点：
+- 成本——MySQL是开放源代码的，一般可以免费使用（甚至可以免费修改）。
+- 性能——MySQL执行很快（非常快）。
+- 可信赖——某些非常重要和声望很高的公司、站点使用MySQL，这些公司和站点都用MySQL来处理自己的重要数据。
+- 简单——MySQL很容易安装和使用。
+
+网上有很多关于安装MySQL安装教程，可以参考下面的教程安装，MySQL安装配置教程：[http://c.biancheng.net/view/7135.html](http://c.biancheng.net/view/7135.html)和MySQL安装：[https://github.com/jackfrued/Python-100-Days/blob/master/Day36-40](https://github.com/jackfrued/Python-100-Days/blob/master/Day36-40/36.%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E5%92%8CMySQL%E6%A6%82%E8%BF%B0.md)
+
+## 1 启动和登陆
+### 1.1 启动
+
+方式一：在cmd中运行：`services.msc`，会打开服务窗口，在服务窗口中找到mysql服务，点击右键可以启动或者停止。
+
+<img src="https://img-blog.csdnimg.cn/c67a6a10ddbd423ebc04b4d0654ce140.png#pic_center" width=36%>
+
+方式二：在cmd中运行以下命令
+
+```bash
+C:\Users\Administrator>net stop mysql
+mysql 服务正在停止。
+mysql 服务已成功停止。
+
+C:\Users\Administrator>net start mysql
+mysql 服务正在启动。
+mysql 服务已经启动成功。
+```
+
+### 1.2 登陆
+
+```SQL
+mysql -h ip -P 端口 -u 用户名 -p
+# mysql -h localhost -P 3306 -u root -p
+```
+参数说明：
+- -P大写的P后面跟上端口
+- 如果登陆本地，ip和端口可以省略
+
+<img src="https://img-blog.csdnimg.cn/1c2a71e3e31b49caacc9fb497745a3ed.png#pic_center" width=36%>
+
+mysql命令行实用程序是使用最多的实用程序之一，它对于快速测试和执行脚本非常有价值。如下所示：
+- 命令输入在mysql>之后；
+- 命令用;或\g结束，换句话说，仅按Enter不执行命令；
+- 输入help或\h获得帮助，也可以输入更多的文本获得特定命令的帮助（如，输入`help select`获得使用`SELECT`语句的帮助）；
+- 输入`quit`或`exit`退出命令行实用程序。
+
+### 1.3 常用工具
+在实际开发中，为了方便用户操作，可以选择图形化的客户端工具来连接 MySQL 服务器，包括：
+
+MySQL Workbench（官方工具）
+<img src="https://img-blog.csdnimg.cn/77a0bfcd1635476fbeb1dfba74ca9430.png#pic_center" width=36%>
+
+Navicat for MySQL（界面简单友好）
+<img src="https://img-blog.csdnimg.cn/c10c85e2fbf34cada6ab6ee0c3df5b81.png#pic_center" width=36%>
+
+
+## 2 基本命令
+### 2.1 查看命令
+1. 选择数据库
+在你最初连接到MySQL时，没有任何数据库打开供你使用。在你能执行任意数据库操作前，需要选择一个数据库。为此，可使用USE关键字。
+```SQL
+mysql> use school;
+Database changed
+```
+`USE`语句并不返回任何结果。依赖于使用的客户机，显示某种形式的通知。例如，这里显示出的Database changed消息是mysql命令行实用程序在数据库选择成功后显示的。
+
+**温馨提示：** 必须先使用USE打开数据库，才能读取其中的数据。关键字(key word) 作为MySQL语言组成部分的一个保留字。决不要用关键字命名一个表或列。
+
+2. 查看所有数据库
+
+```SQL
+show databases;
+```
+`SHOW DATABASES;`返回可用数据库的一个列表。包含在这个列表中的可能是MySQL内部使用的数据库。
+
+3. 查看数据库下所有表
+
+```SQL
+show tables;
+```
+`SHOW TABLES;`返回当前选择的数据库内可用表的列表。
+
+<img src="https://img-blog.csdnimg.cn/28d9de2c842e47e985bad9e429c9de1f.png#pic_center" width=36%>
+
+
+4. 显示表列
+```SQL
+show columns from tb_student;
+```
+<img src="https://img-blog.csdnimg.cn/bcbd94aaf5054ba489e875d7fd0dbff8.png#pic_center" width=36%>
+
+SHOW COLUMNS 要求给出一个表名（ 这个例子中的FROM tb_record），它对每个字段返回一行，行中包含字段名、数据类型、是否允许NULL、键信息、默认值以及其他信息（如字段rec_id的auto_increment）。
+
+> 什么是自动增量？ 某些表列需要唯一值。例如，订单编号、雇员ID或（如上面例子中所示的）顾客ID。在每个行添加到表中时，MySQL可以自动地为每个行分配下一个可用编号，不用在添加一行时手动分配唯一值（这样做必须记住最后一次使用的值）。这个功能就是所谓的自动增量。如果需要它，则必须在用CREATE语句创建表时把它作为表定义的组成部分。
+
+MySQL支持用DESCRIBE作为`SHOW COLUMNS FROM`的一种快捷方式。换句话说，`DESCRIBE customers;`是`SHOW COLUMNS FROM customers;`的一种快捷方式。
+
+5. 查看所有字符集
+
+```SQL
+show character set;
+```
+
+6. 查看所有的排序规则
+
+```SQL
+show collation;
+```
+
+7. 查看所有的引擎
+
+```SQL
+show engines;
+```
+
+8. 查看所有日志文件
+
+```SQL
+show binary logs;
+```
+
+### 2.2 获取帮助
+
+在 MySQL 命令行工具中，可以使用`help`命令或`?`来获取帮助，如下所示。
+
+1. 查看`show`命令的帮助。
+
+    ```MySQL
+    ? show
+    ```
+
+2. 查看有哪些帮助内容。
+
+    ```MySQL
+    ? contents
+    ```
+
+3. 获取函数的帮助。
+
+    ```MySQL
+    ? functions
+    ```
+
+4. 获取数据类型的帮助。
+
+    ```MySQL
+    ? data types
+    ```
+
+
+### 2.3 其他命令
+
+1. 新建/重建服务器连接 - `connect` / `resetconnection`。
+
+2. 清空当前输入 - `\c`。在输入错误时，可以及时使用`\c`清空当前输入并重新开始。
+
+3. 修改终止符（定界符）- `delimiter`。默认的终止符是`;`，可以使用该命令修改成其他的字符，例如修改为`$`符号，可以用`delimiter $`命令。
+
+4. 打开系统默认编辑器 - `edit`。编辑完成保存关闭之后，命令行会自动执行编辑的内容。
+
+5. 查看服务器状态 - `status`。
+
+6. 修改默认提示符 - `prompt`。
+
+7. 执行系统命令 - `system`。可以将系统命令跟在`system`命令的后面执行，`system`命令也可以缩写为`\!`。
+
+8. 执行 SQL 文件 - `source`。`source`命令后面跟 SQL 文件路径。
+
+9. 重定向输出 - `tee` / `notee`。可以将命令的输出重定向到指定的文件中。
+
+10. 切换数据库 - `use`。
+
+11. 显示警告信息 - `warnings`。
+
+12. 退出命令行 - `quit`或`exit`。
+
+
+**补充：**
+
+1. 查看数据库版本
+`mysql --version`或者`mysql -V`用于在未登录情况下，查看本机mysql版本：
+
+```bash
+C:\Users\Administrator>mysql -V
+mysql  Ver 8.0.25 for Win64 on x86_64 (MySQL Community Server - GPL)
+
+C:\Users\Administrator>mysql --version
+mysql  Ver 8.0.25 for Win64 on x86_64 (MySQL Community Server - GPL)
+```
+`select version();`：登录情况下，查看链接的库版本：
+
+```SQL
+mysql> select version();
++-----------+
+| version() |
++-----------+
+| 8.0.25    |
++-----------+
+1 row in set (0.10 sec)
+```
+
+2. 查看其他库中所有的表：`show tables from 库名;`
+
+3. 查看表的创建语句：`show create table 表名;`
+
+<img src="https://img-blog.csdnimg.cn/e4cfc336fba64c3a89082916387ff74d.png#pic_center" width=36%>
+
+4. 查看表结构：`desc 表名;`
+
+5. 查看当前所在库：`select database();`
+
+6. 查看系统变量及其值：`SHOW VARIABLES;`
+
+7. 查看某个系统变量：show variables like '变量名';
+
+<img src="https://img-blog.csdnimg.cn/7d6913798fc042b9b9780e5f35d84f1e.png#pic_center" width=36%>
