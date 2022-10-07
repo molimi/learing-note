@@ -13,6 +13,7 @@
 > 相关题目，可以参考：
 > LeetCode 54. Spiral Matrix：[https://leetcode-cn.com/problems/spiral-matrix/](https://leetcode-cn.com/problems/spiral-matrix/)
 > PAT 1050螺旋矩阵：[https://pintia.cn/problem-sets/994805260223102976/problems/994805275146436608](https://pintia.cn/problem-sets/994805260223102976/problems/994805275146436608)
+
 ## 2 思路分析
 方法一：
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第一步，计算行数$m$和列数$n$的值，$n$从根号$N$的整数部分开始，往前推一直到1，找到第一个满足$N % n==0$的，$m$的值等于$N/n$；
