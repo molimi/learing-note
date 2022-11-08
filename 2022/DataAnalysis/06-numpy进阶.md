@@ -22,7 +22,8 @@ In [6]: array1[np.where(array1 > 5)]
 Out[6]: 
 array([6, 7])
 ```
-1. np.argwhere
+
+2. np.argwhere()
 
 查找按元素分组的非零数组元素的索引。
 ```python
@@ -54,3 +55,31 @@ In [13]: np.argwhere(array3)[:, 0]
 Out[13]: array([1, 2, 5, 6], dtype=int64)
 ```
 说明：`np.argwhere`输出是一列元素，使用`[:,0]`变成一行元素。
+
+3. np.bincount()
+功能：统计从0到array数组中最大数字出现的个数的函数，并同样以array数组输出显示。
+
+输入参数 `x, weights=None, minlength=None`，注意，x为非负整数数组。
+```python
+arr01 = np.array([0, 1, 1, 3, 2, 1, 2, 2, 3, 3, 5])
+print(np.bincount(arr01))       # [1 3 3 3 0 1]
+```
+y的长度为x中最大的数再加上1，也就是5+1，y的长度为6。
+
+x的每一个值相当于y的索引信息，需要统计重复的数字。比如x中的0出现1次，那么y[0]=1, 1出现3次，y[1]=3,同理，y[5]=1。其余位置索引均为0，因为x中没有出现该数字。
+
+minlength大于x的最大值时，才算是发挥作用，举例说明：
+```python
+print(np.bincount(arr01, minlength=3))          # [1 3 3 3 0 1]
+print(np.bincount(arr01, minlength=8))          # [1 3 3 3 0 1 0 0]   长度为8多出2个0
+```
+weights需要和x的形状一致，默认为None时，其实就是每次加1，有了weight，对应相加即可。
+```python
+arr02 = np.array([1, 2, 1, 2, 0])
+weights = np.array([0.3, 0.5, 0.2, 0.7, -1.])
+print(np.bincount(arr02, weights=weights))  #   [-1.   0.5  1.2]
+```
+
+
+
+
