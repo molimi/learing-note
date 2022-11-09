@@ -1,0 +1,7 @@
+{
+    "python.dataScience.jupyterServerURI": "local",
+    "python.globalModuleInstallation": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.terminal.activateEnvironment": true,
+    "python.pythonPath": "C:\\ProgramData\\Anaconda3\\envs\\DataAnalysis\\python.exe"
+}
