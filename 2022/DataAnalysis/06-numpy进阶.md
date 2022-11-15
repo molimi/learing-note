@@ -57,6 +57,7 @@ Out[13]: array([1, 2, 5, 6], dtype=int64)
 说明：`np.argwhere`输出是一列元素，使用`[:,0]`变成一行元素。
 
 3. np.bincount()
+
 功能：统计从0到array数组中最大数字出现的个数的函数，并同样以array数组输出显示。
 
 输入参数 `x, weights=None, minlength=None`，注意，x为非负整数数组。
