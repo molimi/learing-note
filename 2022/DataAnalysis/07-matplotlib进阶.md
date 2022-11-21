@@ -130,4 +130,47 @@ plt.show()
 
 <img src="https://img-blog.csdnimg.cn/ca72e6c10c1e486c8eef0ccfea1b99ca.png#pic_center" width=36%>
 
+## 4 fillbetween()
+`matplotlib.pyplot.fill_between()`用于填充两条水平曲线之间的区域。函数原型为：
+```python
+plt.fill_between(
+                 x, y1, y2=0, where=None, 
+                 interpolate=False, step=None,
+                 hold=None, data=None,
+                 **kwargs
+)
+```
+- x - array( length N) 定义曲线的 x 坐标
+- y1 - array( length N ) or scalar 定义第一条曲线的 y 坐标
+- y2 - array( length N ) or scalar 定义第二条曲线的 y 坐标
+- where - array of bool (length N), optional, default: None。排除一些区域被填充。
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+plt.style.use('_mpl-gallery')
+
+# make data
+np.random.seed(1)
+x = np.linspace(0, 8, 16)
+y1 = 3 + 4*x/8 + np.random.uniform(0.0, 0.5, len(x))
+y2 = 1 + 2*x/8 + np.random.uniform(0.0, 0.5, len(x))
+
+# plot
+fig, ax = plt.subplots()
+
+ax.fill_between(x, y1, y2, alpha=.5, linewidth=0)
+ax.plot(x, (y1 + y2)/2, linewidth=2)
+
+ax.set(xlim=(0, 8), xticks=np.arange(1, 8),
+       ylim=(0, 8), yticks=np.arange(1, 8))
+
+plt.show()
+```
+
+<img src ="https://img-blog.csdnimg.cn/1629775525c24e668b8805dca00a4bc9.png#pic_center" width = 36%>
+
+
+
 > 后续会继续补充~
