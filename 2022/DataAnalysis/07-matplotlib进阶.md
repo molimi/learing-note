@@ -171,6 +171,17 @@ plt.show()
 
 <img src ="https://img-blog.csdnimg.cn/1629775525c24e668b8805dca00a4bc9.png#pic_center" width = 36%>
 
+## 5 plt.gca().set_aspect("equal")
 
+在matplotlib中，整个图像为一个Figure对象。在Figure对象中可以包含一个或者多个Axes对象。每个Axes(ax)对象都是一个拥有自己坐标系统的绘图区域。所属关系如下：
+
+当我们调用plot时，matplotlib会调用`gca()`获取当前的axes绘图区域，而且gca反过来调用`gcf()`来获得当前的figure。
+
+
+在pyplot模块中，许多函数都是对当前的Figure或Axes对象进行处理，比如说：`plt.plot()`实际上会通过`plt.gca()`获得当前的Axes对象ax，然后再调用ax.`plot()`方法实现真正的绘图。
+
+`ax=plt.gca()`之后通过ax可以设定主刻度和副刻度`ax.xaxis.set_major_locotor(MultipleLocator(float))`...set_minor_locator(y轴上的修改为y即可)；除了刻度，x轴和y轴上对于同一个区间，可能长度不同，即axes per unit length可能不等，这时需要一句话搞定ax.set_aspect("equal")。
+
+[matplotlib.axes.Axes.set_aspect](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_aspect.html)
 
 > 后续会继续补充~

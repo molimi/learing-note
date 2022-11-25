@@ -81,6 +81,31 @@ weights = np.array([0.3, 0.5, 0.2, 0.7, -1.])
 print(np.bincount(arr02, weights=weights))  #   [-1.   0.5  1.2]
 ```
 
+4. np.ravel()和np.flatten()
 
+两者的功能是一致的，将多维数组降为一维，但是两者的区别是返回拷贝还是返回视图，`np.flatten()`返回一份拷贝，对拷贝所做修改不会影响原始矩阵，而`np.ravel()`返回的是视图，修改时会影响原始矩阵。
 
+```python
+import numpy as np
+a = np.array([[1 , 2] , [3 , 4]])
+b = a.flatten()
+print('b:' , b)
+c = a.ravel()
+print('c:' , c)
+d = a.ravel('F')
+print('d:' , d)
+
+# 二者的区别
+b[0] = 10
+print('a:' , a)
+c[0] = 10
+print('a:' , a)
+```
+> b: [1 2 3 4]
+> c: [1 2 3 4]
+> d: [1 3 2 4]
+> a: [[1 2]
+>     [3 4]]
+> a: [[10 2]
+>     [ 3 4]]
 
