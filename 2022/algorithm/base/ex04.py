@@ -16,5 +16,7 @@ def main():
     print(anagram_solution('abcde', 'edcba'))
     print(anagram_solution('abcd', 'edcba'))
     print(anagram_solution('abababab', 'abab'))
+    print(anagram_solution('ab', 'ab'))
+    print(anagram_solution('aa', 'aa'))
 
 main()

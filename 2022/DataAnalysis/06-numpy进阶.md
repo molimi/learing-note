@@ -1,6 +1,6 @@
 这个是`Numpy`的学习笔记(二)，记录在实际应用中经常碰到的函数。
 
-1. np.where()
+**1. np.where()**
 `np.where(condition, x, y)`有两种用法：
 - 满足条件(condition)，输出x，不满足输出y。
 - 只有条件 (condition)，没有x和y，则输出满足条件元素的坐标 (等价于`np.argwhere`)。这里的坐标以tuple的形式给出，通常原数组有多少维，输出的tuple中就包含几个数组，分别对应符合条件元素的各维坐标。
@@ -23,7 +23,7 @@ Out[6]:
 array([6, 7])
 ```
 
-2. np.argwhere()
+**2. np.argwhere()**
 
 查找按元素分组的非零数组元素的索引。
 ```python
@@ -81,7 +81,7 @@ weights = np.array([0.3, 0.5, 0.2, 0.7, -1.])
 print(np.bincount(arr02, weights=weights))  #   [-1.   0.5  1.2]
 ```
 
-4. np.ravel()和np.flatten()
+**4. np.ravel()和np.flatten()**
 
 两者的功能是一致的，将多维数组降为一维，但是两者的区别是返回拷贝还是返回视图，`np.flatten()`返回一份拷贝，对拷贝所做修改不会影响原始矩阵，而`np.ravel()`返回的是视图，修改时会影响原始矩阵。
 
@@ -109,3 +109,30 @@ print('a:' , a)
 > a: [[10 2]
 >     [ 3 4]]
 
+**5. np.corrcoef()**
+
+<img src ="https://img-blog.csdnimg.cn/ba508868cb9c44d39c36729320fa8435.png#pic_center" width = 64%>
+
+```python
+import numpy as np
+ 
+arr1 = np.array([[100, 22, 3.6], [0.4, 52, 612]])
+arr2 = np.array([[12, 25, 346], [734, 48, 49]])
+correlation1 = np.corrcoef(arr1, arr2)
+correlation2 = np.corrcoef(arr1)
+
+print("相关系数矩阵=\n", correlation1)
+print("自相关系数矩阵=\n", correlation2)
+```
+> 相关系数矩阵=
+> [[ 1.         -0.7036205  -0.67333238  0.98348215]
+> [-0.7036205   1.          0.99912763 -0.56338032]
+> [-0.67333238  0.99912763  1.         -0.52838608]
+> [ 0.98348215 -0.56338032 -0.52838608  1.        ]]
+> 自相关系数矩阵=
+> [[ 1.        -0.7036205]
+> [-0.7036205  1.       ]]
+
+
+可以看出函数的返回值还是一个矩阵，自己和自己的相关性最大，值为1，所以对角线的值全为1。
+<img src ="https://img-blog.csdnimg.cn/0c382f114bfa4e43af3d406ca6deb366.png#pic_center" width = 64%>
