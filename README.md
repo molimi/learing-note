@@ -26,3 +26,10 @@
 | [PCA](./2022/Sklearn/10-PCA.md)  | [降维、特征提取与流形学习](./2022/Sklearn/11-降维、特征提取与流形学习.md)  | [聚类](./2022/Sklearn/12-聚类.md)  |
 | [交叉验证](./2022/Sklearn/13-交叉验证.md)  | [Adaboost](./2022/Sklearn/14-Adaboost.md)  | [Xgboost](./2022/Sklearn/15-Xgboost.md)  |
 | [网格搜索](./2022/Sklearn/16-网格搜索.md)  | [评估指标与评分](./2022/Sklearn/17-网格指标与评分.md)  | [算法链与管道](./2022/Sklearn/18-算法链与管道.md)  |
+
+### 3 Pytorch
+|  目录 |  目录 | 目录  |
+| --  |  -- | --  |
+| [Pytorch入门](./2022/Pytorch/00-pyotrch.md)  | [张量](./2022/Pytorch/01-tensor.md)  | [数据处理](./2022/Pytorch/02-dataset.md)  |
+| [模型搭建](./2022/Pytorch/03-model.md)  | [损失函数](./2022/Pytorch/04-lossfunction.md)  | [随机种子选择](./2022/Pytorch/05-seed.md)  |
+| [常用函数](./2022/Pytorch/07-funcition.md)  |   |   |
