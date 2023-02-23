@@ -40,8 +40,8 @@
 
 ```python
 class ListNode:
-    def __init__(self, val=0, next=None):
-        self.val = val    
+    def __init__(self, elem=0, next=None):
+        self.elem = elem    
         self.next = next
 ```
 
@@ -128,6 +128,8 @@ while p is not None and 还需继续的其他条件:
     p = p.next
 ```
 
+根据Python语言的规定，这里的 `p is not None` 可以简单地只写一个 `p`。
+
 循环的继续（或结束）条件、循环中的操作由具体问题决定。循环中使用的辅助变量p称为扫描指针。注意，每个扫描循环必须用一个扫描指针作为控制变量，每步迭代前必须检查其值是否为None，保证随后操作的合法性。这与连续表的越界检查类似。
 
 上面表扫描模式是最一般的链表操作模式，下面介绍几个常用操作的实现。
@@ -146,16 +148,16 @@ while p is not NOne and i > 0:
 
 ```python
 p = head
-while p is not None and not pred(p.val):
+while p is not None and not pred(p.elem):
     p = p.next
 ```
-循环结束时或者p是None；或者pred (p.val)是 True，找到了所需元素。
+循环结束时或者p是None；或者pred (p.elem)是 True，找到了所需元素。
 
 完整的扫描称为遍历，这样做通常是需要对表中每个元素做一些事情，例如:
 ```python
 p = head
 while p is not None:
-    print(p.val)
+    print(p.elem)
     p = p.next
 ```
 这个循环依次输出表中各元素。只以条件 `p is not None` 控制循环，就能完成一遍完整的遍历。同样模式可用于做其他工作。
@@ -201,11 +203,91 @@ return n
 图中变星p指向表对象，这个对象的一个数据域记录表中元素个数（图中的20表示这个表当时有20个结点），另一个域引用着该表的结点链。采用了这种表示方式，求表长度的操作就可以简单返回元素计数域的值。但另一方面，这种表的每个变动操作都需要维护计数值。从整体看有得有失。这种调整消除了一个线性时间操作，可能在一些应用中很有意义。
 
 ### 1.3 单链表类的实现
+自定义异常
+
+为能合理地处理一些链表操作中遇到的错误状态（例如，方法执行时遇到了无法操作的错误参数），首先为链表类定义一个新的异常类:
+```python
+class LinkedListUnderflow(ValueError):
+    pass
+```
+
+这里把LinkedListUnderflow定义为标准异常类valueError的子类，准备在空表访问元索等场合抛出这个异常。在这些情况下抛出 valueError 也没问题，但定义了自己的异常类，就可以写专门的异常处理器，在一些情况下可能有用。
 
 
 
+LList类的定义，初始化函数和简单操作
 
+现在基于结点类 ListNode 定义一个单链表对象的类，在这种表对象里只有一个引用链接结点的_head域，初始化为None表示建立的是一个空表。判断表空的操作检查_head；在表头插入数据的操作是prepend，它把包含新元素的结点链接在最前面；操作 pop 删除表头结点并返回这个结点里的数据：
 
+```python
+class LList:
+    def __init__(self):
+        self._head = None
+
+    def is_empty(self):
+        return self._head is None
+
+    def prepend(self, elem):
+        self._head = ListNode(elem, self._head)
+
+    def pop(self):
+        if self._head is None:      # 无结点，引发异常
+            raise LinkedListUnorderflow("in pop")
+        e = self._head.elem
+        self._head = self._head.next
+        return e
+```
+
+这里把 LList 对象的 `_head` 域作为对象的内部表示，不希望外部使用。上面定义里的几个操作都很简单，只有 pop 操作需要检查对象的状态，表中无元素时引发异常。
+
+**后端操作**
+
+在链表的最后插入元素，必须先找到链表的最后一个结点。其实现首先是一个扫描循环，找到相应结点后把包含新元素的结点插入在其后。下面是定义:
+```python
+def append(self, elem):
+    if self._head is None:
+        self._head = ListNone(elem)
+        return 
+    p = self._head
+    while p.next is not None:
+        p = p.next
+    p.next = ListNode(elem)
+```
+
+这里需要区分两种情况：如果原表为空，引用新结点的就应该是表对象的_head域，否则就是已有的最后结点的next域。两种情况下需要修改的数据域不一样。许多链表变动操作都会遇到这个问题，只有表首端插入/删除可以统一处理。
+
+砚在考虑删除表中最后元素的操作，也就是要删除最后的结点。前面说过，要从单链表中删除一个结点，就必须找到它的前一结点。在尾端删除操作里，扫描循环应该找到表中倒数第二个结点，也就是找到`p.next.next`为None的p。下面定义的`pop_last`函数不仅删去表中最后元素，还把它返回（与pop统一）。
+
+在开始一般性扫描之前，需要处理两个特殊情况：如果表空没有可返回的元素时应该引发异常。表中只有一个元素的情况需要特殊处理，因为这时应该修改表头指针。一般情况是先通过循环找到位置，取出最后结点的数据后将其删除:
+
+在开始一般性扫描之前，需要处理两个特殊情况：如果表空没有可返回的元素时应该引发异常。表中只有一个元素的情况需要特殊处理，因为这时应该修改表头指针。一般情况是先通过循环找到位置，取出最后结点的数据后将其删除：
+
+```python
+def pop_last(self):
+    if self._head is None:      # 空表
+        raise LinkeListUnderflow("in pop_last")
+    
+    p = self._head
+    if p.next is None:          # 表中只有一个元素
+        e = p.elem
+        self._head = None
+        return e
+    while p.next.next is not None:
+        p = p.next
+    e = p.next.elem
+    p.next = None
+    return e
+```
+
+LList类的下一个方法是找到满足给定条件的表元素。这个方法有一个参数，调用时通过参数提供一个判断谓词，该方法返回第一个满足谓词的表元素。显然，这个操作也需要采用前面的基本扫描模式。定义如下：
+```python
+def find(self, pred):
+    p = self._head
+    while p is not None:
+        if pred(p.elem):
+            return p.elem
+        p = p.next
+```
 
 
 
