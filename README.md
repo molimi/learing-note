@@ -8,15 +8,12 @@
 
 #### 1 Python
 
-1. [类的使用](./2022/Python/Class)
-2. [Python操作MySQL](./2022/Python/DataBase)
-3. [时间模块](./2022/Python/Datatime)
-4. [文件使用](./2022/Python/File)
-5. [迭代器与生成器](./2022/Python/iter)
-6. [模块的使用](./2022/Python/module)
-7. [Pygame游戏开发](./2022/Python/Pygame)
-8. [正则表达式](./2022/Python/Re)
-9. [进程和线程](./2022/Python/thread)
-10. [错误与异常](./2022/Python/typeerror)
-11. [Web开发](./2022/Python/Web)
+| 目录 | 目录 |  目录 |
+| --| -- | -- | 
+|[Python入门](./2022/Python/Base)  |  [数据类型和运算符](./2022/Python/DataType) |   [列表、元组、字典、集合](./2022/Python/DataStructures) |
+|  [流程控制](./2022/Python/ProcessControl)  |  [函数和表达式](./2022/Python/Function)  |  [错误与异常](./2022/Python/typeerror) |
+| [模块的使用](./2022/Python/module)  | [类的使用](./2022/Python/Class)  | [时间模块](./2022/Python/Datatime) |
+| [文件使用](./2022/Python/File)    | [迭代器与生成器](./2022/Python/iter)  | [Python操作MySQL](./2022/Python/DataBase)| 
+| [Pygame游戏开发](./2022/Python/Pygame)   | [正则表达式](./2022/Python/Re)    | [进程和线程](./2022/Python/thread)|
+| [Web开发](./2022/Python/Web)  |   |    |
 
