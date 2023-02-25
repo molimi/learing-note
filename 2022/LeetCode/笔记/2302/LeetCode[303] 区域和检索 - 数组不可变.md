@@ -90,6 +90,23 @@ class NumArray:
 
 那么查询阶段，求出一行子数组的求和，就只是 $O(1)$，查询 n 行的子阵列，每次就查询花费 $O(n)$，比 $O(n^2)$ 好
 
+**示例代码：**
+```python
+class NumMatrix:
+
+    def __init__(self, matrix: List[List[int]]):
+        m, n = len(matrix), len(matrix[0])          # 矩阵的行和列
+        self.pre_sum = [[0] for _ in range(m)]      # 构造一维前缀和矩阵
+        for i in range(m):
+            for j in range(n):
+                self.pre_sum[i].append(self.pre_sum[i][j]+matrix[i][j])
+
+    def sumRegion(self, row1: int, col1: int, row2: int, col2: int) -> int:
+        return sum([self.pre_sum[i][col2+1]-self.pre_sum[i][col1] for i in range(row1, row2+1)])
+```
+
+
+
 **第二步优化**
 还可以继续优化吗？
 
@@ -166,3 +183,20 @@ $$
 $$
 \sum_{i=a}^A \sum_{i=b}^B \operatorname{arr}[i][j]=\operatorname{preSum}[A+1][B+1]+\operatorname{preSum}[a][b]-\operatorname{preSum}[A+1][b]-\operatorname{preSum}[a][B+1]
 $$
+
+示例代码：
+
+```python
+class NumMatrix:
+
+    def __init__(self, matrix: List[List[int]]):
+        m, n = len(matrix), len(matrix[0])          # 矩阵的行和列
+        self.pre_sum = [[0]*(n+1) for _ in range(m+1)]      # 构造一维前缀和矩阵
+        for i in range(m):
+            for j in range(n):
+                self.pre_sum[i+1][j+1] = self.pre_sum[i+1][j] + self.pre_sum[i][j+1] - self.pre_sum[i][j] + matrix[i][j]
+
+    def sumRegion(self, row1: int, col1: int, row2: int, col2: int) -> int:
+        return (self.pre_sum[row2+1][col2+1] - self.pre_sum[row1][col2+1] - self.pre_sum[row2+1][col1] + self.pre_sum[row1][col1])
+```
+
