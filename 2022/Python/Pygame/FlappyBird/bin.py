@@ -101,9 +101,9 @@ def check_dead():
 def get_result1():
     final_text1 = "Game Over"
     final_text2 = "Your final score is: " + str(score)
-    ft1_font = pygame.font.SysFont('Arial', 70)             # 设置第一行文字字体
+    ft1_font = pygame.font.SysFont('Arial', 40)             # 设置第一行文字字体
     ft1_surf = ft1_font.render(final_text1, 1, (243, 3, 36))    # 设置第一行文字颜色
-    ft2_font = pygame.font.SysFont('Arial', 20)
+    ft2_font = pygame.font.SysFont('Arial', 30)
     ft2_surf = ft2_font.render(final_text2, 1, (253, 177, 6))
     # 设置第一行文字显示位置
     screen.blit(ft1_surf, [screen.get_width()/2-ft1_surf.get_width()/2, 100])
