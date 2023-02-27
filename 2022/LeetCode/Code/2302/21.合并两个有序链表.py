@@ -2,8 +2,12 @@
 # @lc app=leetcode.cn id=21 lang=python3
 #
 # [21] 合并两个有序链表
+<<<<<<< HEAD
+#
+=======
 # 思路一：用递归实现
 # 思路二： 迭代
+>>>>>>> 667449772d496b68931119ce29307e1155363522
 
 # @lc code=start
 # Definition for singly-linked list.
@@ -13,6 +17,8 @@
 #         self.next = next
 class Solution:
     def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+<<<<<<< HEAD
+=======
         '''
         if not list1: return list2
         if not list2: return list1
@@ -40,5 +46,6 @@ class Solution:
         return prehead.next
 
 
+>>>>>>> 667449772d496b68931119ce29307e1155363522
 # @lc code=end
 
