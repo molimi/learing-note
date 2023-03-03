@@ -9,9 +9,11 @@
 class NumArray:
 
     def __init__(self, nums: List[int]):
-        self.nums_array = [0]        # 便于计算累加和
+        self.nums_array = [sum(nums[:i]) for i in range(len(nums)+1)]        # 计算累加和
+        '''
         for num in nums:
             self.nums_array.append(self.nums_array[-1] + num) # 计算nums累加和
+        '''
 
     def sumRange(self, left: int, right: int) -> int:
         nums_array = self.nums_array

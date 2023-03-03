@@ -14,7 +14,7 @@ class Solution:
     def deleteDuplicates(self, head: Optional[ListNode]) -> Optional[ListNode]:
         curr = head     # 指针节点
         while curr and curr.next:
-            if curr.val == curr.next.val:
+            if curr.val == curr.next.val:       # 不删除头结点，就没啥考虑的
                 curr.next = curr.next.next
             else:
                 curr = curr.next
