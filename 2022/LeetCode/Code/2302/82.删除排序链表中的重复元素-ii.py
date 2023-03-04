@@ -14,7 +14,6 @@ class Solution:
     def deleteDuplicates(self, head: Optional[ListNode]) -> Optional[ListNode]:
         cur = head
         prev = None
-<<<<<<< HEAD
         while cur and cur.next:
             if cur.val == cur.next.val:
                 while cur and cur.next and cur.val == cur.next.val:
@@ -28,7 +27,6 @@ class Solution:
                 cur = cur.next
         return head
 
-=======
         flag = False
         while cur and cur.next:
             if cur.val == cur.next.val:
@@ -50,6 +48,5 @@ class Solution:
 
 
 
->>>>>>> 6d61b721a789b2d9c152161f4439f936a1080775
 # @lc code=end
 
