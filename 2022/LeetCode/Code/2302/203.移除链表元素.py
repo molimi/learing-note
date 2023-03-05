@@ -14,33 +14,23 @@
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
-<<<<<<< HEAD
     def removeElements(self, head: Optional[ListNode],
                        val: int) -> Optional[ListNode]:
-        if head == None:
-            return head
-        head.next = self.removeElements(head.next, val)
-        if head.val == val:
-            return head.next
-        else:
-            return head
-
-# @lc code=end
-=======
-    def removeElements(self, head: Optional[ListNode], val: int) -> Optional[ListNode]:
-        cur = head
-        prev = None
-        while cur:
-            if cur.val == val:
-                if prev:
-                    prev.next = cur.next
-                else:
-                    head = cur.next
+        dumpy = ListNode(-1)
+        dumpy.next = head
+        prev = dumpy
+        while prev.next:
+            if prev.next.val == val:
+                prev.next = prev.next.next
             else:
-                prev = cur
-            cur = cur.next
-        return head
+                prev = prev.next
+        return dumpy.next
 # @lc code=end
 
 >>>>>>> 6d61b721a789b2d9c152161f4439f936a1080775

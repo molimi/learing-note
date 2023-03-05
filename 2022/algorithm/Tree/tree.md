@@ -87,6 +87,102 @@
 
 <img src ="https://img-blog.csdnimg.cn/980756af95ce485e91522f45d0622afa.jpeg#pic_center" width = 48%>
 
+### 2.2 二叉树的实现
+
+**1. 列表实现**
+
+```python
+#! /user/bin/env python3
+# -*- coding:utf-8 -*-
+"""
+@author: CarpeDiem
+@date: 23/2/27
+@version: 0.1
+@description: 树的列表实现
+"""
+
+def binary_tree(r):
+    return [r, [], []]
+
+def insert_left(root, new_branch):
+    t = root.pop(1)     # 取出左子树
+    if len(t) > 1:      # 左子树已存在
+        root.insert(1, [new_branch, t, []])
+    else:
+        root.insert(1, [new_branch, [], []])
+    return root
+
+def insert_right(root, new_branch):
+    t = root.pop(2)     # 取出右子树
+    if len(t) > 1:      # 右子树已存在
+        root.insert(2, [new_branch, [], t])
+    else:
+        root.insert(2, [new_branch, [], []])
+    return root
+    
+def get_root_val(root):
+    return root[0]
+
+def set_root_val(root, new_val):
+    root[0] = new_val
+
+def get_left_child(root):
+    return root[1]
+
+def get_right_child(root):
+    return root[2]
+
+r = binary_tree(3)
+insert_left(r, 4)
+insert_left(r, 5)
+insert_right(r, 6)
+insert_right(r, 7)
+print(r)
+l = get_left_child(r)
+print(l)
+set_root_val(l, 9)
+print(r)
+insert_left(l, 11)
+print(r)
+print(get_right_child(get_right_child(r)))
+```
+
+**2. 链表实现**
+
+```python
+
+```
+
+
+
+### 2.3 二叉树的遍历
+#### 2.3.1 前序遍历
+
+<img src ="https://img-blog.csdnimg.cn/ac5af9257cd54b67ad5fb11de2a599a1.webp#pic_center" width = 48%>
+
+
+
+#### 2.3.2 中序遍历
+
+
+<img src ="https://img-blog.csdnimg.cn/1dc89d79090447f38a7cde9087ea81f0.webp#pic_center" width = 48%>
+
+
+#### 2.3.3 后序遍历
+
+<img src ="https://img-blog.csdnimg.cn/2582aba782e549bea397d06e094f2171.webp#pic_center" width = 48%>
+
+#### 2.3.4 遍历算法的简单应用
+
+
+
+
+
+### 2.4 线索二叉树
+
+
+### 2.5 树和二叉树转换
+
 
 
 
