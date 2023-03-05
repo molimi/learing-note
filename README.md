@@ -60,7 +60,7 @@ CSDN博客：[https://blog.csdn.net/xq151750111?type=blog](https://blog.csdn.net
 |  目录 |  目录 | 目录  |
 | --  |  -- | --  |
 | [算法基础](./2022/algorithm/base/base.md)  | [链表](./2022/algorithm/UnorderedList/unorderedList.md)  | [队列](./2022/algorithm/Queue/queue.md)  |
-| [栈](./2022/algorithm/Stack/stack.md)  | [递归](./2022/algorithm/Recursion/recursion.md)  | [树]()  |
+| [栈](./2022/algorithm/Stack/stack.md)  | [递归](./2022/algorithm/Recursion/recursion.md)  | [树](./2022/algorithm/Tree/)  |
 
 
 ### 7 LeetCode
@@ -77,3 +77,12 @@ CSDN博客：[https://blog.csdn.net/xq151750111?type=blog](https://blog.csdn.net
 | --  |  -- | --  |
 | [SQL基础](./2022/Mysql/01.SQL%E5%9F%BA%E7%A1%80.md)  | [MySQL基础](./2022/Mysql/02.MYSQL%E5%9F%BA%E7%A1%80.md)  | [数据类型](./2022/Mysql/03.%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B.md)  |
 | [数据表的基本操作](./2022/Mysql/04.%E6%95%B0%E6%8D%AE%E8%A1%A8%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C.md)  |   |   |
+
+
+### 9 Linux
+
+|  目录 |  目录 | 目录  |
+| --  |  -- | --  |
+| [Shell与Bash的区别和联系](./2022/Linux/01.Shell%E4%B8%8EBash%E7%9A%84%E5%8C%BA%E5%88%AB%E5%92%8C%E8%81%94%E7%B3%BB.md)  | [初识Linux](./2022/Linux/02.%E5%88%9D%E8%AF%86Linux.md)  | [文件结构及操作](./2022/Linux/03.%E6%96%87%E4%BB%B6%E7%BB%93%E6%9E%84%E5%8F%8A%E6%93%8D%E4%BD%9C.md)  |
+| [环境变量与文件查找](./2022/Linux/04.%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E6%96%87%E4%BB%B6%E6%9F%A5%E6%89%BE.md)  | [文档压缩与解压缩](./2022/Linux/05.%E6%96%87%E6%A1%A3%E5%8E%8B%E7%BC%A9%E4%B8%8E%E8%A7%A3%E5%8E%8B%E7%BC%A9.md)  |  [文件系统操作与管理](./2022/Linux/06.%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%93%8D%E4%BD%9C%E4%B8%8E%E7%AE%A1%E7%90%86.md) |
+| [用户管理](./2022/Linux/07.%E7%94%A8%E6%88%B7%E7%AE%A1%E7%90%86.md)      |       |   |
