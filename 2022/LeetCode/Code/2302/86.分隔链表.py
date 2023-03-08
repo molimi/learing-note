@@ -27,9 +27,13 @@ class Solution:
                 p2.next = p 
                 p2 = p2.next
             # 断开原链表中的每个结点的 next 指针
+            '''
             temp = p.next
             p.next = None
             p = temp
+            '''
+            p = p.next
+        p2.next = None
         # 合并两个链表
         p1.next = dummy2.next
         return dummy1.next
