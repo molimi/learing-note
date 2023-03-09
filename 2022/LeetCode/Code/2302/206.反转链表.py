@@ -12,16 +12,14 @@
 #         self.next = next
 class Solution:
     def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
-        if head == None:
+        if head == None or head.next == None:
             return head
-        cur = head
-        pre = None
-        while cur:
-            temp = cur.next
-            cur.next = pre
-            pre = cur
-            cur = temp
-        
-        return pre
+        # reverse_head 表示 head.next 后面一整段反转之后的头结点，所以最后return reverse_head
+        reverse_head = self.reverseList(head.next)
+        # 此时 head.next 指向的已经是反转部分的尾巴
+        head.next.next = head
+        # head 指向 None，表示此时 head 已经是尾巴了
+        head.next = None
+        return reverse_head
 # @lc code=end
 
