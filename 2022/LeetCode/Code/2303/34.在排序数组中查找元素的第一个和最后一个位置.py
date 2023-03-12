@@ -7,30 +7,29 @@
 # @lc code=start
 class Solution:
     def searchRange(self, nums: List[int], target: int) -> List[int]:
-        if target not in nums:
+        if not nums or target not in nums:
             return [-1, -1]
-        elif len(nums) == 1:
-            return [0,0]
-        left, right = 0, len(nums)
+        return [self.lower_bound(nums, target), self.upper_bound(nums, target)]
+
+    def upper_bound(self, nums: List[int], target: int):    # 寻找上边界
+        left, right = 0, len(nums)-1
         while left <= right:
-            mid = (left + right) // 2
-            if nums[mid] < target:
+            mid = left + (right - left) // 2
+            if nums[mid] <= target:
                 left = mid + 1
-            elif nums[mid] > target:
+            else:
+                right = mid -1
+        return right
+
+
+    def lower_bound(self, nums: List[int], target: int):    # 寻找下边界
+        left, right = 0, len(nums)-1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] >= target:
                 right = mid - 1
             else:
-                break
-
-        for i in range(mid-1, -1, -1):
-            if nums[i] != target:
-                break
-        for j in range(mid+1, len(nums)):
-            if nums[j] != target:
-                break
-        if i == 0 and nums[i] == target:
-            i -= 1
-        if j == len(nums)-1 and nums[j] == target:
-            j += 1
-        return [i+1, j-1]
+                left = mid + 1
+        return left
 # @lc code=end
 
