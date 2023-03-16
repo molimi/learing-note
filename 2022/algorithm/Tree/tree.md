@@ -160,10 +160,40 @@ print(get_right_child(get_right_child(r)))
 **2. 链表实现**
 
 ```python
+class BinaryTree:
+    def __init__(self, root_obj):
+        self.key = root_obj
+        self.left_child = None
+        self.right_child = None
 
+    def insert_left(self, new_node):
+        if self.left_child == None:
+            self.left_child = BinaryTree(new_node)
+        else:
+            t = BinaryTree(new_node)
+            t.left_child = self.left_child
+            self.left_child = t
+
+    def insert_right(self, new_node):
+        if self.right_child == None:
+            self.right_child = BinaryTree(new_node)
+        else:
+            t = BinaryTree(new_node)
+            t.right_child = self.right_child
+            self.right_child = t
+
+    def get_right_child(self):
+        return self.right_child
+
+    def get_left_child(self):
+        return self.left_child
+
+    def set_root_val(self, obj):
+        self.key = obj
+
+    def get_root_val(self):
+        return self.key
 ```
-
-
 
 ### 2.3 二叉树的遍历
 #### 2.3.1 前序遍历
@@ -171,16 +201,46 @@ print(get_right_child(get_right_child(r)))
 <img src ="https://img-blog.csdnimg.cn/ac5af9257cd54b67ad5fb11de2a599a1.webp#pic_center" width = 48%>
 
 
+- 遍历顺序：根结点->左子树->右子树
+- 动态图解：和上面的动态图一样，先序遍历就像一个小人从根结点开始，围绕二叉树的外圈开始跑（遇到缝隙就钻进去），按照跑的顺序，依次输出序列
+
+```python
+def pre_order(tree):
+    if tree:
+        print(tree.key)
+        pre_order(tree.get_left_child())
+        pre_order(tree.get_right_child())
+```
 
 #### 2.3.2 中序遍历
 
-
 <img src ="https://img-blog.csdnimg.cn/1dc89d79090447f38a7cde9087ea81f0.webp#pic_center" width = 48%>
 
+- 遍历顺序：左子树->根结点->右子树
+- 动态图解：中序遍历就像投影仪一样，将二叉树从最左侧到最右侧依次投影到同一水平线上面，得到的从左到右的相关序列就是二叉树的中序遍历
 
+```python
+def in_order(tree):
+    if tree:
+        in_order(tree.get_left_child())
+        print(tree.key)
+        in_order(tree.get_right_child())
+```
 #### 2.3.3 后序遍历
 
 <img src ="https://img-blog.csdnimg.cn/2582aba782e549bea397d06e094f2171.webp#pic_center" width = 48%>
+
+- 遍历顺序：左子树->右子树->根结点
+- 动态图解： 后序遍历也是按照先序遍历的顺序输出，不过后序遍历就像剪葡萄，只能一个个剪，不能让超过1个的葡萄一起掉下来，那就错了。例如上图中的 B，剪去 B 后面的 D、E、H、I、J 都会掉下来，而 H 剪去只会掉下 H，规律就是这个规律
+
+
+
+```python
+def post_order(tree):
+    if tree:
+        post_order(tree.get_left_child())
+        post_order(tree.get_right_child())
+```
 
 #### 2.3.4 遍历算法的简单应用
 

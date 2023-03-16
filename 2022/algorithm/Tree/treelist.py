@@ -5,6 +5,7 @@
 @date: 23/2/27
 @version: 0.1
 @description: 树的列表实现
+@Idea: 自上而下增加子树，先插入的为叶子结点，后插入的为父结点
 """
 
 def binary_tree(r):
