@@ -12,7 +12,7 @@ class Solution:
         length = len(nums)
         for i in range(length): 
             # 剪枝处理
-            if nums_sorted[i] > target and nums_sorted[i] >= 0:
+            if nums_sorted[i] > target and nums_sorted[i] >= 0:     # 只有满足target>=0或者nums_sorted>=[0]，必然不用遍历
                 break
             # 对 nums_sorted[i] 去重
             if i > 0 and nums_sorted[i] == nums_sorted[i-1]:
