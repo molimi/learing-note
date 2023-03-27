@@ -41,7 +41,7 @@ class Solution:
 
 <img src ="https://img-blog.csdnimg.cn/e90b16c456204a99a476695f0cd0c172.png#pic_center" width = 48%>
 
-题目链接：[https://leetcode.cn/problems/corporate-flight-bookings/](https://leetcode.cn/problems/corporate-flight-bookings/)
+题目链接：[https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/](https://leetcode.cn/problems/two-sum-ii-input-array-is-sorted/)
 
 
 ### 2.2 思路分析
@@ -132,3 +132,145 @@ class Solution:
 
 - 时间复杂度：$O(n)$，其中 $n$ 是数组的长度。两个指针移动的总次数最多为 $n$ 次。
 - 空间复杂度：$O(1)$。
+
+
+## 3 三数之和
+### 3.1 题目描述
+
+<img src ="https://img-blog.csdnimg.cn/fddb00219fde407689a52836eac6282a.png#pic_center" width = 48%>
+
+题目链接：[https://leetcode.cn/problems/3sum/](https://leetcode.cn/problems/3sum/)
+
+
+### 3.2 思路分析
+
+**1. 排序+双指针**
+算法流程：
+1. 特判，对于数组长度 $n$，如果数组为 `None` 或者数组长度小于 $3$，返回 []。
+2. 对数组进行排序。
+3. 遍历排序后数组：
+    - 若 $nums[i]>0$：因为已经排序好，所以后面不可能有三个数加和等于 0，直接返回结果。
+    - 对于重复元素：跳过，避免出现重复解令左指针 $L=i+1$，右指针 $R=n−1$，当 $L<R$ 时，执行循环：
+        - 当 $nums[i]+nums[L]+nums[R]==0$，执行循环，判断左界和右界是否和下一位置重复，去除重复解。并同时将 $L,R$ 移到下一位置，寻找新的解
+        - 若和大于 0，说明 $nums[R]$ 太大，R 左移
+        - 若和小于 0，说明 nums[L] 太小，L 右移
+
+```python
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        nums_sorted = sorted(nums)
+        result = []
+        for i in range(len(nums_sorted)):
+            if nums_sorted[i] > 0:                              # 排序之后如果第一个元素已经大于零，那么无论如何组合都不可能凑成三元组，直接返回结果就可以了
+                return result
+            '''
+            # 错误去重a方法，将会漏掉-1,-1,2 这种情况
+            if (nums[i] == nums[i + 1]) {
+                continue;
+            }
+            '''
+            if i>0 and nums_sorted[i] == nums_sorted[i-1]:      # 第一个数大于 0，后面的数都比它大，肯定不成立了
+                continue
+            left = i+1
+            right = len(nums_sorted)-1
+            while left < right:
+                '''
+                # 去重复逻辑如果放在这里，0，0，0 的情况，可能直接导致 right<=left 了，从而漏掉了 0,0,0 这种三元组
+                while (right > left && nums[right] == nums[right - 1]) right--;
+                while (right > left && nums[left] == nums[left + 1]) left++;
+                '''
+                if nums_sorted[i]+nums_sorted[left]+nums_sorted[right] == 0:
+                    result.append([nums_sorted[i], nums_sorted[left], nums_sorted[right]])
+                    # 在要增加 left，减小 right，但是不能重复，比如: [-2, -1, -1, -1, 3, 3, 3], 
+                    # i = 0, left = 1, right = 6, [-2, -1, 3] 的答案加入后，需要排除重复的 -1 和 3
+                    while left < right and nums_sorted[left] == nums_sorted[left+1]:
+                        left += 1
+                    while left < right and nums_sorted[right] == nums_sorted[right-1]:
+                        right -= 1
+                    # 找到答案时双指针同时收缩
+                    left += 1
+                    right -= 1
+                elif nums_sorted[i]+nums_sorted[left]+nums_sorted[right] > 0:
+                    right -= 1
+                else:
+                    left += 1
+
+        return result
+```
+
+
+<img src ="https://img-blog.csdnimg.cn/e9c94225aa1a408b94283a30d59f118c.gif#pic_center" width = 48%>
+
+**复杂度分析**
+- 时间复杂度：$O(n^2)$，数组排序 $O(NlogN)$，遍历数组 $O(n)$，双指针遍历 $O(n)$，总体 $O(NlogN)+O(n)∗O(n)$，$O(n^2)$
+- 空间复杂度：$O(1)$
+
+
+
+## 4 四数之和
+### 4.1 题目描述
+
+<img src ="https://img-blog.csdnimg.cn/859ee016692d43629e0a6e59f6469c4f.png#pic_center" width = 48%>
+
+题目链接：[https://leetcode.cn/problems/4sum/](https://leetcode.cn/problems/4sum/)
+
+
+### 4.2 思路分析
+**1. 排序 + 双指针**
+
+最朴素的方法是使用四重循环枚举所有的四元组，然后使用哈希表进行去重操作，得到不包含重复四元组的最终答案。假设数组的长度是 $n$，则该方法中，枚举的时间复杂度为 $O(n^4)$，去重操作的时间复杂度和空间复杂度也很高，因此需要换一种思路。
+
+为了避免枚举到重复四元组，则需要保证每一重循环枚举到的元素不小于其上一重循环枚举到的元素，且在同一重循环中不能多次枚举到相同的元素。
+
+为了实现上述要求，可以对数组进行排序，并且在循环过程中遵循以下两点：
+- 每一种循环枚举到的下标必须大于上一重循环枚举到的下标；
+- 同一重循环中，如果当前元素与上一个元素相同，则跳过当前元素。
+
+使用上述方法，可以避免枚举到重复四元组，但是由于仍使用四重循环，时间复杂度仍是 $O(n^4
+)$。注意到数组已经被排序，因此可以使用双指针的方法去掉一重循环。
+
+使用两重循环分别枚举前两个数，然后在两重循环枚举到的数之后使用双指针枚举剩下的两个数。假设两重循环枚举到的前两个数分别位于下标 $i$ 和 $j$，其中 $i<j$。初始时，左右指针分别指向下标 $j+1$ 和下标 $n−1$。每次计算四个数的和，并进行如下操作：
+- 如果和等于 target，则将枚举到的四个数加到答案中，然后将左指针右移直到遇到不同的数，将右指针左移直到遇到不同的数；
+- 如果和小于 target，则将左指针右移一位；
+- 如果和大于 target，则将右指针左移一位。
+
+使用双指针枚举剩下的两个数的时间复杂度是 $O(n)$, 因此总时间复杂度是 $O(n^3)$，低于 $O(n^4)$。
+
+```python
+class Solution:
+    def fourSum(self, nums: List[int], target: int) -> List[List[int]]:
+        nums_sorted = sorted(nums)
+        result = []
+        length = len(nums)
+        for i in range(length): 
+            # 剪枝处理
+            if nums_sorted[i] > target and nums_sorted[i] >= 0:     # 只有满足target>=0或者nums_sorted>=[0]，必然不用遍历
+                break
+            # 对 nums_sorted[i] 去重
+            if i > 0 and nums_sorted[i] == nums_sorted[i-1]:
+                continue
+            for j in range(i+1, length):        # 比原来多一层循环
+                # 二级剪枝处理
+                if nums_sorted[i] + nums_sorted[j] > target and nums_sorted[i] + nums_sorted[j] >= 0:
+                    break   # 这里直接 return 会出错
+                # 对 nums_sorted[j] 去重
+                if j > i+1 and nums_sorted[j] == nums_sorted[j-1]:
+                    continue
+                left = j + 1
+                right = length - 1
+                while left < right:
+                    if nums_sorted[i] + nums_sorted[j] + nums_sorted[left] + nums_sorted[right] == target:
+                        result.append([nums_sorted[i], nums_sorted[j], nums_sorted[left], nums_sorted[right]])
+                        while left < right and nums_sorted[left] == nums_sorted[left+1]:
+                            left += 1
+                        while left < right and nums_sorted[right] == nums_sorted[right-1]:
+                            right -= 1
+                        left += 1
+                        right -= 1
+                    elif nums_sorted[i] + nums_sorted[j] + nums_sorted[left] + nums_sorted[right] > target:
+                        right -= 1
+                    else:
+                        left += 1
+        return result
+```
+
