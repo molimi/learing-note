@@ -10,29 +10,6 @@ LeetCode[59] 螺旋矩阵Ⅱ
 
 ## 1 二维数组遍历
 
-**1. 起始位置**
-
-螺旋矩阵的遍历起点是矩阵的左上角，也就是 `(0, 0)` 位置。
-
-**2. 移动方向**
-
-起始位置的下一个移动方向是向右。在遍历的过程中，移动方向是固定的：
-$$右→，下↓，左←，上↑$$
-
-移动方向是按照上面的顺序循环进行的。每次当移动到了边界，才会更改方向。但边界并不是固定的，请看下面分析。
-
-**3. 边界** 
-
-本题的边界是最大的难点，因为是随着遍历的过程而变化的。螺旋遍历的时候，已经遍历的数字不能再次遍历，所以边界会越来越小。
-
-规则是：<font color=#9900CC><strong>如果当前行（列）遍历结束之后，就需要把这一行（列）的边界向内移动一格。</strong></font>
-
-以下面的图为例，up, down, left, right 分别表示四个方向的边界，初始时分别指向矩阵的四个边界。如果我们把第一行遍历结束（遍历到了右边界），此时需要修改新的移动方向为向下、并且把上边界 up 下移一格，即从 旧 up 位置移动到 新 up 位置。
-
-
-
-
-## 2 真题演练
 
 <blockquote><ul>
 <li><p><a href="https://leetcode.cn/problems/rotate-image/" target="_blank">48. 旋转图像</a> </p>
@@ -40,14 +17,14 @@ $$右→，下↓，左←，上↑$$
 <li><p><a href="https://leetcode.cn/problems/spiral-matrix-ii/" target="_blank">59. 螺旋矩阵Ⅱ</a></p></li>
 </ul></blockquote> 
 
-### 2.1 旋转图像
-#### 2.1.1 题目描述
+### 1.1 旋转图像
+#### 1.1.1 题目描述
 <img src ="https://img-blog.csdnimg.cn/527e6eab2a274c3393c50dadc9333e6f.png#pic_center" width = 80%>
 
 
 题目链接：[https://leetcode.cn/problems/rotate-image/](https://leetcode.cn/problems/rotate-image/)
 
-#### 2.1.2 辅助矩阵
+#### 1.1.2 辅助矩阵
 
 如下图所示，矩阵顺时针旋转 $90^{\circ}$ 后，可找到以下规律：
 - 「第 $i$ 行」元素旋转到「第 $n−1−i$ 列」元素；
@@ -77,7 +54,7 @@ class Solution:
 
 遍历矩阵所有元素的时间复杂度为 $O(N^2)$；由于借助了一个辅助矩阵，空间复杂度为 $O(N^2)$。
 
-#### 2.1.3 原地修改
+#### 1.1.3 原地修改
 
 考虑不借助辅助矩阵，通过在原矩阵中直接「原地修改」，实现空间复杂度 O(1)O(1)O(1) 的解法。
 
@@ -130,7 +107,7 @@ class Solution:
 时间复杂度 $O(N^2)$： 其中 $N$ 为输入矩阵的行（列）数。需要将矩阵中每个元素旋转到新的位置，即对矩阵所有元素操作一次，使用 $O(N^2)$ 时间。
 空间复杂度 $O(1)$： 临时变量 $tmp$ 使用常数大小的额外空间。值得注意，当循环中进入下轮迭代，上轮迭代初始化的 $tmp$ 占用的内存就会被自动释放，因此无累计使用空间。
 
-#### 2.1.4 对角线反转，左右翻转
+#### 1.1.4 对角线反转，左右翻转
 
 <center class = "half"><img src ="https://img-blog.csdnimg.cn/637cd943a28e4e0daecd5f3f22183a20.png#pic_left" width = "30%"><img src = "https://img-blog.csdnimg.cn/a9352cbe7d3c4c00846e7d7231242b95.png#pic_left"  width = "36%"></center></p>
 
@@ -151,7 +128,7 @@ class Solution:
         for line in matrix:
             line.reverse()      # 左右翻转
 ```
-#### 2.1.5 上下反转，对角线反转
+#### 1.1.5 上下反转，对角线反转
 
 <img src ="https://img-blog.csdnimg.cn/f416b80bd9b645fbb1092edf25f8b9fa.png#pic_center" width = 48%>
 
@@ -165,15 +142,16 @@ class Solution:
 ```
 
 
-### 2.2 螺旋矩阵
-#### 2.2.1 题目描述
+### 1.2 螺旋矩阵
+#### 1.2.1 题目描述
 <img src ="https://img-blog.csdnimg.cn/6d55d8fc218f4a21a4bcaf7306d6931d.png#pic_center" width = 80%>
 
 题目链接：[https://leetcode.cn/problems/spiral-matrix/](https://leetcode.cn/problems/spiral-matrix/)
 
 
-#### 2.2.2 思路分析
+#### 1.2.2 思路分析
 
+**1. 按照「形状」进行模拟**
 解题的核心思路是按照右、下、左、上的顺序遍历数组，并使用四个变量圈定未遍历元素的边界：
 
 <img src ="https://img-blog.csdnimg.cn/0ec43be24ea44f77a266d4faaa015e72.png#pic_center" width = 48%>
@@ -222,15 +200,94 @@ def spiralOrder(matrix: List[List[int]]) -> List[int]:
     return res
 ```
 
+**2. 按照「方向」进行模拟**
 
-### 2.3 螺旋矩阵Ⅱ
-#### 2.3.1 题目描述
+(1) 起始位置
+
+螺旋矩阵的遍历起点是矩阵的左上角，也就是 `(0, 0)` 位置。
+
+(2) 移动方向
+
+起始位置的下一个移动方向是向右。在遍历的过程中，移动方向是固定的：
+$$右→，下↓，左←，上↑$$
+
+移动方向是按照上面的顺序循环进行的。每次当移动到了边界，才会更改方向。但边界并不是固定的，请看下面分析。
+
+(3) 边界 
+
+本题的边界是最大的难点，因为是随着遍历的过程而变化的。螺旋遍历的时候，已经遍历的数字不能再次遍历，所以边界会越来越小。
+
+规则是：<font color=#9900CC><strong>如果当前行（列）遍历结束之后，就需要把这一行（列）的边界向内移动一格。</strong></font>
+
+以下面的图为例，up, down, left, right 分别表示四个方向的边界，初始时分别指向矩阵的四个边界。如果我们把第一行遍历结束（遍历到了右边界），此时需要修改新的移动方向为向下、并且把上边界 up 下移一格，即从 旧 up 位置移动到 新 up 位置。
+
+<img src ="https://img-blog.csdnimg.cn/48a5978f540e42ffaf12e90f76e0e8d2.jpeg#pic_center" width = 48%>
+
+当绕了一圈后，从下向上走到 新 up 边界的时候，此时需要修改新的移动方向为向右、并且把左边界 left 下移一格，即从 旧 left 位置移动到 新 left 位置。
+
+<img src ="https://img-blog.csdnimg.cn/ebec8294298d4d7f83df2e1ab3c8c3a6.jpeg#pic_center" width = 48%>
+
+由此可见，根据维护的四个方向的边界，就知道什么时候更改移动方向了。
+
+(4) 结束条件
+
+螺旋遍历的结束条件是所有的位置都被遍历到。
+
+
+**代码实现：**
+- up, down, left, right 分别表示四个方向的边界。
+- x, y 表示当前位置。
+- dirs 分别表示移动方向是 右、下、左、上 。
+- cur_d 表示当前的移动方向的下标，dirs[cur_d] 就是下一个方向需要怎么修改 x, y。
+- `cur_d == 0 and y == right` 表示当前的移动方向是向右，并且到达了右边界，此时将移动方向更改为向下，并且上边界 up 向下移动一格。
+- 结束条件是结果数组 res 的元素个数能与 matrix 中的元素个数。
+
+
+```python
+class Solution(object):
+    def spiralOrder(self, matrix):
+        if not matrix or not matrix[0]: return []
+        M, N = len(matrix), len(matrix[0])
+        left, right, up, down = 0, N - 1, 0, M - 1
+        res = []
+        x, y = 0, 0
+        dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        cur_d = 0
+        while len(res) != M * N:
+            res.append(matrix[x][y])
+            if cur_d == 0 and y == right:
+                cur_d += 1
+                up += 1
+            elif cur_d == 1 and x == down:
+                cur_d += 1
+                right -= 1
+            elif cur_d == 2 and y == left:
+                cur_d += 1
+                down -= 1
+            elif cur_d == 3 and x == up:
+                cur_d += 1
+                left += 1
+            cur_d %= 4
+            x += dirs[cur_d][0]
+            y += dirs[cur_d][1]
+        return res
+```
+
+
+
+### 1.3 螺旋矩阵Ⅱ
+#### 1.3.1 题目描述
 <img src ="https://img-blog.csdnimg.cn/7fe64c24624b491ebdac3573b9ff41e3.png#pic_center" width = 48%>
 
 题目链接：[https://leetcode.cn/problems/spiral-matrix-ii/](https://leetcode.cn/problems/spiral-matrix-ii/)
 
 
-#### 2.3.2 思路分析
+#### 1.3.2 思路分析
+
+**1. 按照「形状」进行填充**
+
+<img src ="https://img-blog.csdnimg.cn/10d868bcb53940a7a246b8cbf8cff260.png#pic_center" width = 48%>
+
 ```python
 def generateMatrix(n: int) -> List[List[int]]:
     matrix = [[0 for _ in range(n)] for _ in range(n)]
@@ -274,6 +331,74 @@ def generateMatrix(n: int) -> List[List[int]]:
     
     return matrix
 ```
+**2. 按照「方向」进行填充**
+
+
+**(1) 四个变量标记边界**
+```python
+class Solution(object):
+    def generateMatrix(self, n):
+        if n == 0: return []
+        res = [[0] * n for i in range(n)]
+        left, right, up, down = 0, n - 1, 0, n - 1
+        x, y = 0, 0
+        dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        cur_d = 0
+        count = 0
+        while count != n * n:
+            res[x][y] = count + 1
+            count += 1
+            if cur_d == 0 and y == right:
+                cur_d += 1
+                up += 1
+            elif cur_d == 1 and x == down:
+                cur_d += 1
+                right -= 1
+            elif cur_d == 2 and y == left:
+                cur_d += 1
+                down -= 1
+            elif cur_d == 3 and x == up:
+                cur_d += 1
+                left += 1
+            cur_d %= 4
+            x += dirs[cur_d][0]
+            y += dirs[cur_d][1]
+        return res
+```
+
+**(2) 使用非 0 数字标记边界**
+
+我们在遍历的过程中，需要依次放入 $1-N^2$ 数字，如果我们把结果数组的所有位置初始化为 0，那么非 0 的位置就代表我们已经遍历过了，相当于边界。
+
+当遍历到数组的原始边界或者撞到了非 0 的数字，表示当前方向已经遍历到了边界，需要更改移动方向。这个做法的优点是省去了维护 4 个变量表示的边界。
+
+<img src ="https://img-blog.csdnimg.cn/1034bcd0845e452badf50151e7361ae0.jpeg#pic_center" width = 48%>
+
+初始移动方向是向右，如果遇到了数组边界或者遇到了非 0 的数字，那么就要转动方向。转向的方法是 `cur_d = (cur_d + 1) % 4`，cur_d 表示了当前的方向是 directions 中的哪个，顺序依次是 右、下、左、上。
+
+```python
+class Solution(object):
+    def generateMatrix(self, n):
+        directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        res = [[0] * n for i in range(n)]
+        x, y = 0, 0
+        count = 0
+        cur_d = 0
+        while count != n * n:
+            res[x][y] = count + 1
+            count += 1
+            dx, dy = directions[cur_d][0], directions[cur_d][1]
+            newx, newy = x + dx, y + dy
+            if newx < 0 or newx >= n or newy < 0 or newy >= n or res[newx][newy] != 0:
+                cur_d = (cur_d + 1) % 4
+                dx, dy = directions[cur_d][0], directions[cur_d][1]
+            x, y = x + dx, y + dy
+        return res
+```
+
+
+
 
 ## 参考
 - 旋转图像（辅助矩阵 / 原地修改，清晰图解）：[https://leetcode.cn/problems/rotate-image/solutions/1228078/48-xuan-zhuan-tu-xiang-fu-zhu-ju-zhen-yu-jobi/](https://leetcode.cn/problems/rotate-image/solutions/1228078/48-xuan-zhuan-tu-xiang-fu-zhu-ju-zhen-yu-jobi/)
+- 矩阵遍历问题的四部曲：[https://leetcode.cn/problems/spiral-matrix-ii/solutions/659234/ju-zhen-bian-li-wen-ti-de-si-bu-qu-by-fu-sr5c/](https://leetcode.cn/problems/spiral-matrix-ii/solutions/659234/ju-zhen-bian-li-wen-ti-de-si-bu-qu-by-fu-sr5c/)
