@@ -274,3 +274,41 @@ class Solution:
         return result
 ```
 
+## 5 最接近的三数之和
+### 5.1 题目描述
+
+<img src ="https://img-blog.csdnimg.cn/b659a65060434092baf958d566165a36.png#pic_center" width = 64%>
+
+题目链接：[https://leetcode.cn/problems/3sum-closest/description/](https://leetcode.cn/problems/3sum-closest/description/)
+
+
+### 5.2 思路分析
+
+**1. 排序+双指针**
+
+```python
+class Solution:
+    def threeSumClosest(self, nums: List[int], target: int) -> int:
+        nums_sorted = sorted(nums)
+        diff = float('inf')         # 初始化，因为找最小值，因此把初始值设置成实数的最大值
+        length = len(nums)          # 排序是前提
+        for i in range(length):
+            if i > 0 and nums_sorted[i] == nums_sorted[i-1]:    # 常见的剪枝操作
+                continue
+            left = i+1                                          # 双指针：指针对撞
+            right = length-1 
+            while left < right:
+                temp = nums_sorted[left] + nums_sorted[right] + nums_sorted[i]
+                if abs(temp-target) < diff:     
+                    diff = abs(temp-target)
+                    ans = temp
+                # 不管是变小还是变大，尝试的作用是让 temp 与 target 更接近，即 temp 与 target 的绝对值之差越来越小
+                if temp > target:        # 如果大了，尝试右边界收缩一格，让 temp 变小
+                    right -= 1
+                elif temp < target:     # 如果小了，尝试左边界收缩一格，让 target 变大
+                    left += 1
+                else:                   # 如果已经等于 target 的话, 肯定是最接近的，根据题目要求，返回这三个数的和
+                    return target
+        return ans
+```
+<img src ="https://img-blog.csdnimg.cn/4c1e5f8bccd24b64b5aa661e33078775.gif#pic_center" width = 64%>

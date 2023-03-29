@@ -6,23 +6,31 @@
 
 # @lc code=start
 class Solution:
-    # def triangleNumber(self, nums: List[int]) -> int:
-    def triangleNumber(self, nums) -> int:
+    def triangleNumber(self, nums: List[int]) -> int:
         nums.sort()
         length = len(nums)
         ans = 0
+        '''
         for i in range(length):
             for j in range(i+1, length):
                 left, right = j+1, length              
-                while left < right:
+                while left < right:             # 找边界，
                     mid = (left + right)//2
                     if nums[mid] < nums[i] + nums[j]:
                         left = mid + 1
                     else:
                         right = mid
                 ans += left - 1 - j
-            
         return ans
+        '''
+        for i in range(length):
+            k = i + 1 
+            for j in range(i+1, length):
+                while k+1 < length and nums[i] + nums[j] > nums[k+1]:
+                    k += 1
+                ans += max(k-j, 0)
+        return ans
+
 '''
 s = Solution()
 s.triangleNumber([2,2,2,2,2,2])

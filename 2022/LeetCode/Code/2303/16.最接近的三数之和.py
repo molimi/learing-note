@@ -14,7 +14,7 @@ class Solution:
             if i > 0 and nums_sorted[i] == nums_sorted[i-1]:    # 常见的剪枝操作
                 continue
             left = i+1                                          # 双指针：指针对撞
-            right = length-1
+            right = length-1 
             while left < right:
                 temp = nums_sorted[left] + nums_sorted[right] + nums_sorted[i]
                 if abs(temp-target) < diff:     
