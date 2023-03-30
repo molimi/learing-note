@@ -233,7 +233,7 @@ def in_order(tree):
 - 遍历顺序：左子树->右子树->根结点
 - 动态图解： 后序遍历也是按照先序遍历的顺序输出，不过后序遍历就像剪葡萄，只能一个个剪，不能让超过1个的葡萄一起掉下来，那就错了。例如上图中的 B，剪去 B 后面的 D、E、H、I、J 都会掉下来，而 H 剪去只会掉下 H，规律就是这个规律
 
-
+**1. 递归遍历**
 
 ```python
 def post_order(tree):
@@ -241,6 +241,12 @@ def post_order(tree):
         post_order(tree.get_left_child())
         post_order(tree.get_right_child())
 ```
+
+**2. 顺序遍历**
+
+
+
+
 
 #### 2.3.4 遍历算法的简单应用
 
