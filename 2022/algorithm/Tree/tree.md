@@ -196,6 +196,17 @@ class BinaryTree:
 ```
 
 ### 2.3 二叉树的遍历
+
+下面以LeetCode为例，如下：
+
+```python
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+```
+
 #### 2.3.1 前序遍历
 
 <img src ="https://img-blog.csdnimg.cn/ac5af9257cd54b67ad5fb11de2a599a1.webp#pic_center" width = 48%>
@@ -204,13 +215,47 @@ class BinaryTree:
 - 遍历顺序：根结点->左子树->右子树
 - 动态图解：和上面的动态图一样，先序遍历就像一个小人从根结点开始，围绕二叉树的外圈开始跑（遇到缝隙就钻进去），按照跑的顺序，依次输出序列
 
+**1. 递归遍历**
+
 
 ```python
-def pre_order(tree):
-    if tree:
-        print(tree.key)
-        pre_order(tree.get_left_child())
-        pre_order(tree.get_right_child())
+class Solution:
+    def preorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        # 递归实现
+        self.result = []                # 使用布局变量存储结果
+        self.traverse(root)
+        return self.result
+    
+    def traversal(self, root):
+        if not root: return
+        self.result.append(root.val)    # 前序
+        self.traverse(root.left)        # 左
+        self.traverse(root.right)       # 右
+```
+
+**2. 迭代遍历**
+
+前序遍历是中左右，每次先处理的是中间节点，那么先将根节点放入栈中，然后将右孩子加入栈，再加入左孩子。
+
+为什么要先加入 右孩子，再加入左孩子呢？ 因为这样出栈的时候才是中左右的顺序。
+
+<img src ="https://img-blog.csdnimg.cn/c5c3f9057ca94ce2a587ac70d75c71a6.gif#pic_center" width = 64%>
+
+```python
+class Solution:
+    def preorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        # 迭代法
+        if not root: return []
+        stack = [root]
+        result = []
+        while stack:
+            node = stack.pop()
+            result.append(node.val)         # 中结点先处理
+            if node.right:
+                stack.append(node.right)    # 右子树先入栈
+            if node.left:
+                stack.append(node.left)     # 左子树先入栈
+        return result
 ```
 
 #### 2.3.2 中序遍历
@@ -220,13 +265,53 @@ def pre_order(tree):
 - 遍历顺序：左子树->根结点->右子树
 - 动态图解：中序遍历就像投影仪一样，将二叉树从最左侧到最右侧依次投影到同一水平线上面，得到的从左到右的相关序列就是二叉树的中序遍历
 
+**1. 递归遍历**
+
 ```python
-def in_order(tree):
-    if tree:
-        in_order(tree.get_left_child())
-        print(tree.key)
-        in_order(tree.get_right_child())
+class Solution:
+    def inorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        self.result = []
+        self.traversal(root)
+        return self.result
+    
+    def traversal(self, root: Optional[TreeNode]):
+        if not root: return 
+        self.traversal(root.left)               # 前
+        self.result.append(root.val)            # 中
+        self.traversal(root.right)              # 后
 ```
+
+
+**2. 顺序遍历**
+
+分析一下为什么前面写的前序遍历的代码，不能和中序遍历通用呢，因为前序遍历的顺序是中左右，先访问的元素是中间节点，要处理的元素也是中间节点，所以刚刚才能写出相对简洁的代码，因为要访问的元素和要处理的元素顺序是一致的，都是中间节点。
+
+那么再看看中序遍历，中序遍历是左中右，先访问的是二叉树顶部的节点，然后一层一层向下访问，直到到达树左面的最底部，再开始处理节点（也就是在把节点的数值放进result数组中），这就造成了处理顺序和访问顺序是不一致的。
+
+那么在使用迭代法写中序遍历，就需要借用指针的遍历来帮助访问节点，栈则用来处理节点上的元素。
+
+<img src ="https://img-blog.csdnimg.cn/c2a71a2b489244ab8c1d338ad481b62c.gif#pic_center" width = 64%>
+
+```python
+class Solution:
+    def inorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        if not root: return []
+        stack = []                      # 不能提前将root结点加入stack中
+        result = []
+        cur = root
+        while cur or stack:         
+            if cur:                     # 先迭代访问最底层的左子树结点
+                stack.append(cur)
+                cur = cur.left
+            else:                       # 到达最左节点后处理栈顶结点
+                cur = stack.pop()
+                result.append(cur.val)
+                cur = cur.right         # 取栈顶元素右节点
+        return result
+```
+
+
+
 #### 2.3.3 后序遍历
 
 <img src ="https://img-blog.csdnimg.cn/2582aba782e549bea397d06e094f2171.webp#pic_center" width = 48%>
@@ -236,30 +321,98 @@ def in_order(tree):
 
 **1. 递归遍历**
 
+
 ```python
-def post_order(tree):
-    if tree:
-        post_order(tree.get_left_child())
-        post_order(tree.get_right_child())
+class Solution:
+    def postorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        self.result = []
+        self.traversal(root)
+        return self.result
+
+    def traversal(self, root: Optional[TreeNode])-> List[int]:
+        if not root: return
+        self.traversal(root.left)               # 左
+        self.traversal(root.right)              # 右
+        self.result.append(root.val)            # 中
 ```
+
+
 
 **2. 顺序遍历**
 
+先序遍历是中左右，后续遍历是左右中，那么我们只需要调整一下先序遍历的代码顺序，就变成中右左的遍历顺序，然后在反转result数组，输出的结果顺序就是左右中了，如下图：
 
+<img src ="https://img-blog.csdnimg.cn/86f4c5c6d33c4c6a85bfd7766b556481.png#pic_center" width = 64%>
 
+```python
+class Solution:
+    def postorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        # 迭代遍历
+        if not root: return []
+        stack = [root]
+        result = []
+        while stack:
+            node = stack.pop()
+            result.append(node.val)                     # 中结点先处理
+            if node.left: stack.append(node.left)       # 左子树先入栈
+            if node.right: stack.append(node.right)     # 右子树后入栈
+        return result[::-1]                             # 将最终数组反转
+```
 
+#### 2.3.4 层序遍历
 
-#### 2.3.4 遍历算法的简单应用
+层序遍历一个二叉树。就是从左到右一层一层的去遍历二叉树。这种遍历的方式和我们之前讲过的都不太一样。
 
+需要借用一个辅助数据结构即队列来实现，队列先进先出，符合一层一层遍历的逻辑，而用栈先进后出适合模拟深度优先遍历也就是递归的逻辑。
 
+而这种层序遍历方式就是图论中的广度优先遍历，只不过我们应用在二叉树上。
 
+使用队列实现二叉树广度优先遍历，动画如下：
 
+<img src ="https://img-blog.csdnimg.cn/efcf191da696427e897166f1053da6cc.gif#pic_center" width = 64%>
 
-### 2.4 线索二叉树
+**1. 迭代法**
 
+```python
+from collections import deque
+class Solution:
+        # 二叉树层序遍历迭代解法
+        if not root: return []
+        results = []
+        if not root: return result
+        que = deque([root])
+        while que:
+            size = len(que)
+            result = []
+            for _ in range(size):       # 这里一定要使用固定大小size，不要使用len(que)，因为len(que)是不断变化的
+                cur = que.popleft()
+                result.append(cur.val)
+                if cur.left:
+                    que.append(cur.left)
+                if cur.right:
+                    que.append(cur.right)
+            results.append(result)
+        return results
+```
 
-### 2.5 树和二叉树转换
+**2. 递归法**
 
+```python
+from collections import deque
+class Solution:
+    # 递归法
+    def levelOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        self.res = []
+        self.helper(root, 0)
+        return self.res
+
+    def helper(self, root: Optional[TreeNode], depth) -> Optional:
+        if not root: return []
+        if len(self.res) == depth: self.res.append([])
+        self.res[depth].append(root.val)
+        if root.left: self.helper(root.left, depth+1)
+        if root.right: self.helper(root.right, depth+1)
+```
 
 
 

@@ -11,9 +11,24 @@
 #         self.val = val
 #         self.left = left
 #         self.right = right
-              
+
+from collections import deque          
 class Solution:
     def maxDepth(self, root: Optional[TreeNode]) -> int:
+        # 按层次遍历，深度
+        if not root: return 0
+        q = deque([root])
+        depth = 0
+        while q:
+            n = len(q)
+            for _ in range(n):
+                node = q.popleft()
+                if node.left: q.append(node.left)
+                if node.right: q.append(node.right)
+            depth += 1
+        return depth
+        '''
+        # 按中左右遍历
         self.res = 0                # 记录最大深度
         self.depth= 0               # 记录遍历到的节点的深度
         self.traverse(root)
@@ -30,6 +45,7 @@ class Solution:
         self.traverse(root.right)
         # 后序位置
         self.depth -= 1
+        '''
         
 # @lc code=end
 
