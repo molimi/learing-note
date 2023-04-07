@@ -28,7 +28,7 @@ class Solution:
             depth += 1
         return depth
         '''
-        # 按中左右遍历
+        # 按中左右中遍历
         self.res = 0                # 记录最大深度
         self.depth= 0               # 记录遍历到的节点的深度
         self.traverse(root)
