@@ -1,5 +1,5 @@
 ## 1 单调栈
-
+### 1.1 介绍
 栈（stack）是很简单的一种数据结构，先进后出的逻辑顺序，符合某些问题的特点，比如说函数调用栈。
 
 单调栈实际上就是栈，只是利用了一些巧妙的逻辑，使得每次新元素入栈后，栈内的元素都保持有序（单调递增或单调递减）。
@@ -8,19 +8,239 @@
 
 听起来有点像堆（heap）？不是的，单调栈用途不太广泛，只处理一种典型的问题，叫做 Next Greater Element。本文用讲解单调队列的算法模版解决这类问题，并且探讨处理「循环数组」的策略。
 
+比如说给一个数组 `arr = { 5，4，6，7，2，3，0，1 }`，我想知道每一个元素左边比该元素大且离得最近的元素和右边比该元素大且离得最近的元素都是什么。
+
+如果数组有 $N$ 个元素，经典解法就是来到 $i$ 位置，左边遍历直到比 arr[i] 大的元素为止，右边遍历直到比 arr[i] 大的元素为止。确定一个位置的时间复杂度为 $O(N)$，确定 $N$ 个位置的时间复杂度就是 $O(N^2)$。
 
 
-## 2 真题演练
-### 2.1 题库列表
+能不能将确定 $N$ 个位置的时间复杂度降到 $O(N)$？单调栈结构。
+
+同样，如果使用单调栈能够找到每一个元素左边和右边比该元素大且离得最近的元素，同样也能找到每个元素左边和右边比该元素小且离得最近的元素。
+
+### 1.2 流程（无重复）
+
+单调栈本身是支持数组中有重复值的，但是我们为了讲清原理，举得例子中数组是没有重复值的。
+
+首先，准备一个栈。
+
+== 栈中存储的是数组中元素的下标。为什么不存储元素？是因为下标不仅仅能够表示元素，还能表示元素在数组中的位置，携带的信息更多。==
+
+<font color=#9900CC><strong>如果要找到数组中每一个元素左右两边比该元素大且离得最近的元素，那么单调栈要保证从栈底到栈顶存储的下标对应的元素是从大到小的。</strong></font>
+
+<font color=#9900CC><strong>如果要找到数组中每一个元素左右两边比该元素小且离得最近的元素，那么单调栈要保证从栈底到栈顶存储的下标对应的元素是从小到大的。</strong></font>
+
+本案例只找比该元素大且离得最近的元素。
+
+<img src ="https://img-blog.csdnimg.cn/c2eacab4d2734ca2a404e7d4c4f1eb9d.webp#pic_center" width = 64%>
+
+从头开始遍历数组：
+- 如果栈中没有元素，直接将元素的下标压栈。
+- 如果栈中有元素，当前元素和栈顶的下标所指向的元素进行比较：
+    - 当前元素比栈顶的下标所指向的元素小，将当前元素的下标压栈。
+    - 当前元素比栈顶的下标所指向的元素大，栈顶的下标弹栈，同时记录原栈顶下标对应的元素的信息。原栈顶下标对应的元素左边比该元素大且离得最近的元素就是在栈中原栈顶下标压在下面的相邻下标对应的元素；原栈顶下标对应的元素右边比该元素大且离得最近的元素就是让它的下标弹栈的下标对应的元素。记录完之后，当前元素继续和新栈顶下标对应的元素进行比较。如果栈中只有一个下标，则该下标左边没有比该下标对应的元素大且离得最近的元素，右边正常。
+
+
+当数组遍历完后，如果栈中还有下标，则进入清算阶段：
+- 如果不是最后一个下标，依次弹出栈顶下标，原栈顶下标对应的元素左边比该元素大的且离得最近的元素就是在栈中原栈顶下标压在下面的相邻下标；原栈顶下标对应的元素右边没有比该元素大的且离得最近的元素。
+- 是最后一个下标，弹出该下标，该下标对应的元素没有左边比该元素大的且离得最近的元素，也没有右边没有比该元素大的且离得最近的元素。
+
+
+> 设计这种规则实际上就是在严格维护单调栈的单调性。
+
+
+### 1.3 流程（有重复）
+
+假设数组中有重复值，那么单调栈中存储的元素就不能只是一个下标了，可能会存储多个下标，这多个下标对应的数组中的值是一样的。
+
+因此在实现上，我们偏向去使用一个链表来作为单调栈的元素类型，<font color=#9900CC><strong>同一个链表中所有下标指向的元素值是一样的</font></strong>。
+
+这种结构可以处理有重复值的数组，也可以处理无重复值的数组，是万能的。
+
+
+<img src ="https://img-blog.csdnimg.cn/3196ff76e878470888c2da59d97214ae.webp#pic_center" width = 64%>
+
+
+流程上和无重复的大致相同，区别在于：
+- 当前元素比栈顶的下标链表所指向的元素大，栈顶的下标链表弹栈，同时记录原栈顶下标链表中每一个下标对应的元素的信息。原栈顶下标链表中每一个下标对应的元素左边比该元素大且离得最近的元素都是在栈中原栈顶下标链表压在下边的相邻下标链表的最后一个下标对应的元素；原栈顶下标链表中每一个下标对应的元素有右边比该元素大且离得最近的元素就是让它的下标链表弹栈的下标链表中的下标对应的元素（此时下标链表中只会有一个元素）。如果栈中只有一个下标链表，则该链表中所有下标左边没有比该下标对应的元素大且离得最近的元素，右边正常。
+- 当前元素与栈顶的下标链表所指向的元素相等，将该元素对应的下标连接到栈顶的下标链表的末尾。
+
+
+
+> 为什么说使用单调栈可以将时间复杂度降低至 $O(N)$？
+> 假设有数组中有 N 个元素，在我们计算出了所有元素的左右边比该元素大或者小且离得最近的元素的整个过程中，无论是使用有重复的模型还是无重复的模型，每一个元素都只进栈一次，出栈一次。
+
+
+### 1.4 应用
+
+单调栈最经典的应用，就是在一个数列里寻找距离元素最近的比其大/小的元素位置。
+
+比如以下问题：
+
+对数列中的每个元素，寻找其左侧第一个比它大的元素位置。
+
+显而易见的，我们可以遍历每个元素，然后从其位置往左寻找，这样的暴力做法时间复杂度是 $O(n^2)$。
+
+但单调栈可以将时间复杂度降到 $O(n)$ ————
+
+我们只需从右往左遍历数列，依次将元素加入单调栈中，维护一个从栈底到栈顶递减的单调栈；
+
+当某个元素被从栈内弹出时，代表它遇到了一个比它更大的元素，因为是从右往左遍历，所以该元素就是第一个比它大的元素，即所求。
+
+如果最后仍在栈内，则说明该元素左侧没有比它更大的元素。
+
+遍历的时间复杂度是 $O(n)$，每个元素最多被加入单调栈一次、弹出来一次，所以总时间复杂度是 $O(n)$。
+
+对于要求解的这类问题，我们可以列一个简单的表格——
+
+<table data-draft-node="block" data-draft-type="table" data-size="normal" data-row-style="normal"><tbody><tr><th>求解的问题</th><th>遍历方向</th><th>维护单调性（栈底-&gt;栈顶）</th></tr><tr><td>左侧第一个更大</td><td>从右到左</td><td>单调递减</td></tr><tr><td>左侧第一个更小</td><td>从右到左</td><td>单调递增</td></tr><tr><td>右侧第一个更大</td><td>从左到右</td><td>单调递减</td></tr><tr><td>右侧第一个更小</td><td>从左到右</td><td>单调递增</td></tr></tbody></table>
+
+### 1.5 维护单调栈
+
+单调栈：栈内的元素按照某种方式排序下单调递增或单调递减，如果新入栈的元素破坏的单调性，就弹出栈内元素，直到满足单调性。
+
+单调栈分为单调递增栈和单调递减栈：
+- 单调递增栈：栈中数据出栈的序列为单调递减序列；
+- 单调递减栈：栈中数据出栈的序列为单调递增序列。
+
+<img src ="https://img-blog.csdnimg.cn/d3246d66f6204007a689f2fad35aa6db.png#pic_center" width = 48%>
+
+**(1) 维护单调递增栈**
+- 遍历数组中每一个元素，执行入栈：每次入栈前先检验栈顶元素和进栈元素的大小。
+- 如果栈空或进栈元素大于栈顶元素则直接入栈；如果进栈元素小于等于栈顶元素，则出栈，直至进栈元素大于栈顶元素。
+
+```python
+class Solution:
+    def monostoneStack(self, arr: List[int]) -> List[int]:
+        stack = []
+        ans = 定义一个长度和 arr 一样长的数组，并初始化为 -1
+        循环 i in  arr:
+            while stack and arr[i] < arr[栈顶元素]:
+                peek = 弹出栈顶元素
+                ans[peek] = i - peek
+            stack.append(i)
+        return ans
+```
+
+
+**(2) 维护单调递减栈**
+- 遍历数组中每一个元素，执行入栈：每次入栈前先检验栈顶元素和进栈元素的大小。
+- 如果栈空或进栈元素小于栈顶元素则直接入栈；如果进栈元素大于等于栈顶元素，则出栈，直至进栈元素小于栈顶元素。
+
+
+```python
+class Solution:
+    def monostoneStack(self, arr: List[int]) -> List[int]:
+        stack = []
+        ans = 定义一个长度和 arr 一样长的数组，并初始化为 -1
+        循环 i in  arr:
+            while stack and arr[i] > arr[栈顶元素]:
+                peek = 弹出栈顶元素
+                ans[peek] = i - peek
+            stack.append(i)
+        return ans
+```
+
+
+
+## 2 单调队列
+
+单调队列：队列中元素之间的关系具有单调性，而且队首和队尾都可以进行出队操作，只有队尾可以进行入队操作。
+
+队尾入队的时候维护单调性：
+- 对于单调递增队列，设当前准备入队的元素为 e，从队尾开始把队列中的元素逐个与 e 对比，把比 e 大或者与 e 相等的元素逐个删除，直到遇到一个比 e 小的元素或者队列为空为止，然后把当前元素 e 插入到队尾。
+- 对于单调递减队列也是同样道理，只不过从队尾删除的是比 e 小或者与 e 相等的元素。
+
+若队列有大小限制，则每次插入新元素的时候，需要从队头开始弹出元素，直到队列至少有一个空间留给当前元素。
+
+举例来说，nums=[3,2,8,4,5,7,6,4]，初始时，deque=[]，限制队列长度不能超过 3，维护一个单增队列，
+- 3入队：$deque=[3]$；
+- 3从队尾出队，2 入队：deque=[2]；
+- 8入队：ddeque=[2,8]；
+- 8从队尾出队，4入队：deque=[2,4]；
+- 5入队：deque=[2,4,5]；
+- 2从队头出队，7入队：deque=[4,5,7]；
+- 7从队尾出队，6入队：deque=[4,5,6]；
+- 6从队尾出队，5从队尾出队，4从队尾出队，4入队：deque=[4]。
+
+单调队列的作用：区间最小（最大）值问题、优化动态规划、优化多重背包
+
+
+
+**单调栈和单调队列的区别和联系**
+
+**相同点**
+- 单调队列和单调栈的“头部”都是最先添加的元素，“尾部”都是最后添加的元素。
+- 递增和递减的判断依据是：从栈底（队尾）到栈顶（队首），元素大小的变化情况。队列和栈是相反的。
+- 操作非常相似。当队列长度为无穷大时，递增的单调队列和递减的单调栈，排列是一样的！这是因为，长度为无穷大的的队列不会在“头部”有出队操作，而在“尾部”的操作是一模一样的：数据都从“尾部”进入，并按照相同的规则进行比较。
+- 两者维护的时间复杂度都是O(n)，因为每个元素都只操作一次。
+
+**区别**
+- 队列可以从队列头弹出元素，可以方便地根据入队的时间顺序（访问的顺序）删除元素。这样导致了单调队列和单调栈维护的区间不同。当访问到第i个元素时，单调栈维护的区间为[0, i)，而单调队列维护的区间为(lastpop, i)
+- 单调队列可以访问“头部”和“尾部”，而单调栈只能访问栈顶（也就是“尾部”）。这导致单调栈无法获取[0, i)的区间最大值/最小值。
+
+综上所述，单调队列实际上是单调栈的的升级版。单调栈只支持访问尾部，而单调队列两端都可以。
+
+
+## 3 真题演练
+### 3.1 单调栈
 
 <table><thead><tr><th>题号</th><th>链接</th></tr></thead><tbody><tr><td>496</td><td><a href="https://leetcode.cn/problems/next-greater-element-i/" target="_blank">下一个更大元素 I</a>（简单）</td></tr><tr><td>503</td><td><a href="https://leetcode.cn/problems/next-greater-element-ii/" target="_blank">下一个更大元素 II</a>（中等）</td></tr><tr><td>739</td><td><a href="https://leetcode.cn/problems/daily-temperatures/" target="_blank">每日温度</a>（中等）</td></tr><tr><td>42</td><td><a href="https://leetcode.cn/problems/trapping-rain-water/" target="_blank">接雨水</a>（困难）</td></tr><tr><td>84</td><td><a href="https://leetcode.cn/problems/largest-rectangle-in-histogram/" target="_blank">柱状图中最大的矩形</a>（困难）</td></tr><tr><td>402</td><td><a href="https://leetcode.cn/problems/remove-k-digits/" target="_blank">移掉 K 位数字</a>（中等）</td></tr><tr><td>316</td><td><a href="https://leetcode.cn/problems/remove-duplicate-letters/" target="_blank">去除重复字母</a>（中等）</td></tr><tr><td>321</td><td><a href="https://leetcode.cn/problems/create-maximum-number/" target="_blank">拼接最大数</a>（困难）</td></tr></tbody></table>
-
 
 
 **496. 下一个更大元素 I**
 
 <img src ="https://img-blog.csdnimg.cn/46b0683955fc491994e872ca053927bd.png#pic_center" width = 64%>
 
+**1. 暴力法**
+
+```python
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        m, n = len(nums1), len(nums2)
+        res = [0] * m
+        for i in range(m):
+            j = nums2.index(nums1[i])
+            k = j + 1
+            while k < n and nums2[k] < nums2[j]:
+                k += 1
+            res[i] = nums2[k] if k < n else -1
+        return res
+```
+
+
+**2. 单调栈 + 哈希表**
+
+**方式一：借助栈，正序遍历**
+
+```python
+class Solution(object):
+    def nextGreaterElement(self, nums1, nums2):
+        # 因为题目说了没有重复元素，因此可以使用字典来维护元素的下一个更大元素：key-元素，value-下一个更大的元素
+        hash_map, stack = {}, []        # 单调递减栈：用于找到下一个更大的元素
+        for num in nums2:
+                while stack and stack[-1] < num:       # 单调栈
+                    hash_map[stack.pop()] = num
+                stack.append(num)                          
+        return [hash_map.get(num, -1) for num in nums1]
+```
+
+<img src ="https://img-blog.csdnimg.cn/801d2a78730146059082ed19be205a1e.gif#pic_center" width = 48%>
+
+**方式二：借助栈，逆序遍历**
+
+```python
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        res, stack = {}, []
+        for num in reversed(nums2):         # 由于是逆序遍历，所以栈中元素不可能是其之前某个元素的，下一个更大元素，所以将栈中元素清空
+            while stack and num >= stack[-1]:
+                stack.pop()
+            res[num] = stack[-1] if stack else -1
+            stack.append(num)
+        return [res[num] for num in nums1]
+```
+
+<img src ="https://img-blog.csdnimg.cn/440932e62cfb49289a3aae6e4f459bbc.gif#pic_center" width = 48%>
 
 
 **503. 下一个更大元素 II**
@@ -28,18 +248,59 @@
 <img src ="https://img-blog.csdnimg.cn/984a323bc3644f658e86ca0d573d91c6.png#pic_center" width = 64%>
 
 
+```python
+class Solution:
+    def nextGreaterElements(self, nums: List[int]) -> List[int]:
+        length = len(nums)
+        res = [-1]*length
+        stack = []
+        for i in range(length*2):       # 变为2倍模拟循环数组
+            ind = i % length
+            while stack and nums[stack[-1]] < nums[ind]:
+                res[stack.pop()] = nums[ind]
+            stack.append(ind)
+        return res
+```
 
 
+<img src ="https://img-blog.csdnimg.cn/e651b7ab4102473391bfd24c0bcd1242.gif#pic_center" width = 48%>
 
 **739. 每日温度**
 
 <img src ="https://img-blog.csdnimg.cn/c9567749c1a743e2b94324331b26ec9e.png#pic_center" width = 64%>
 
+**方式一：单调栈 正序遍历**
+
+```python
+class Solution:
+    def dailyTemperatures(self, T: List[int]) -> List[int]:
+        stack = []           # 这里定义一个栈就不用说了
+        res = [0] * len(T)   # 这里是最后要返回的result，因为题目中说没有匹配的就返回0，
+                             # 所以这里初始化一个全是0的list，然后把那些有匹配的替换掉即可。
+
+        for idx, t in enumerate(T):  # 下面是关键
+            while stack and t > T[stack[-1]]:       # 当stack为空时，运行stack.append(idx)，则stack=[0]
+                                                    # 然后仅当遍历元素 t 小于stack顶端的值时append进去，
+                                                    # 这会导致stack中idx代表的元素是单调递减的，
+                                                    # 如果此时遍历到一个 t，大于stack顶端的值，那这个t就是离stack
+                                                    # 顶端值最近的那个大值。
+                res[stack.pop()] = idx-stack[-1]    # 然后pop出来，还是要注意stack.pop出来的是idx，这样res这
+                                                    # 一串0里对应位置的0就会被替换成应有的值。                                        
+                                                    # 再进入while循环判断t和stack.pop后的新的顶端值哪个大。
+                                                    # 如此反复。
+            stack.append(idx)
+        return res
+```
+
+<img src ="https://img-blog.csdnimg.cn/1bde21adaced4c0193692f55d048e437.gif#pic_center" width = 48%>
 
 
 **42. 接雨水**
 
 <img src ="https://img-blog.csdnimg.cn/16fbf37c4c0a4ffda718be399aab036f.png#pic_center" width = 64%>
+
+
+
 
 
 **84. 柱状图中最大的矩形**
@@ -67,3 +328,17 @@
 
 
 <img src ="https://img-blog.csdnimg.cn/d0ae08993e7244af8e8b58fb61f3336c.png#pic_center" width = 64%>
+
+
+### 3.2 单调队列
+
+
+
+_____
+
+## 参考
+- 【数据结构与算法】单调栈详解：[https://juejin.cn/post/7019648593694818334](https://juejin.cn/post/7019648593694818334)
+- 数据结构-单调栈：[https://zhuanlan.zhihu.com/p/344988226](https://zhuanlan.zhihu.com/p/344988226)
+- leetcode-屡试不爽的单调（递增\递减）栈：[https://www.jianshu.com/p/f593d56adee7](https://www.jianshu.com/p/f593d56adee7)
+- 单调栈与单调队列算法详解及LeetCode经典题目（Python）：[https://blog.csdn.net/Hanx09/article/details/108434955](https://blog.csdn.net/Hanx09/article/details/108434955)
+- 单调队列/栈从入门到入土：[https://www.cnblogs.com/wsyunine/p/14851199.html](https://www.cnblogs.com/wsyunine/p/14851199.html)
