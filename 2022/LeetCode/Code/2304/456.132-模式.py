@@ -7,6 +7,7 @@
 # @lc code=start
 class Solution:
     def find132pattern(self, nums: List[int]) -> bool:
-        
+        # 找到峰值
+
 # @lc code=end
 
