@@ -475,7 +475,8 @@ if __name__ == '__main__':
 
 在这个案例中，我们使用了JSON作为数据传输的格式（通过JSON格式对传输的数据进行了序列化和反序列化的操作），但是JSON并不能携带二进制数据，因此对图片的二进制数据进行了Base64编码的处理。Base64是一种用64个字符表示所有二进制数据的编码方式，通过将二进制数据每6位一组的方式重新组织，刚好可以使用0~9的数字、大小写字母以及“+”和“/”总共64个字符表示从000000到111111的64种状态。[维基百科](https://zh.wikipedia.org/wiki/Base64)上有关于Base64编码的详细讲解，不熟悉Base64的读者可以自行阅读。
 
-## 3 创建数据包套接字
+## 3 创建UDP套接字
+
 
 传输层除了有可靠的传输协议TCP之外，还有一种非常轻便的传输协议叫做用户数据报协议，简称UDP。TCP和UDP都是提供端到端传输服务的协议，二者的差别就如同打电话和发短信的区别，后者不对传输的可靠性和可达性做出任何承诺从而避免了TCP中握手和重传的开销，所以在强调性能和而不是数据完整性的场景中（例如传输网络音视频数据），UDP可能是更好的选择。可能大家会注意到一个现象，就是在观看网络视频时，有时会出现卡顿，有时会出现花屏，这无非就是部分数据传丢或传错造成的。
 
@@ -490,6 +491,30 @@ if __name__ == '__main__':
 
 实际应用中，QQ 视频聊天和语音聊天主要使用 SOCK_DGRAM 来传输数据，因为首先要保证通信的效率，尽量减小延迟，而数据的正确性是次要的，即使丢失很小的一部分数据，视频和音频也可以正常解析，最多出现噪点或杂音，不会对通信质量有实质的影响。当然，SOCK_DGRAM 没有想象中的糟糕，不会频繁的丢失数据，数据错误只是小概率事件。
 
+本部分将学习利用 UDP 套接字编程实现网络连通程序Ping。包含如何使用 UDP 套接字发送和接收数据报；如何设置适当的套接字超时；Ping 应用程序通信过程及计算网络统计信息（如丢包率）。
+
+Ping 程序的基本原理：利用客户端发送一个数据包到远程机器，远程机器将收到的数据包返回到客户端（称为回显），客户端根据是否收到发送的消息及计算数据包的往返时间来反映网络是否连通及网络状态。
+
+首先，要实现一个用 Python 编写的简单的 Ping 服务端程序，然后再实现对应的客户端程序。程序功能类似于现代操作系统中可用的标准 Ping 程序功能，不过这里使用简单的 UDP 协议，而不是标准互联网控制消息协议（ICMP）来进行通信的
+
+### 3.1 基于 UDP 协议的 Socket 套接字编程
+
+UDP 协议是非连接的协议，通信双方不用建立连接，而是直接把要发送的数据发送给对方。UDP 协议适用于一次传输数据量很少，对可靠性要求不高的应用场景。但由于UDP 协议没有类似于 TCP 的三次握手、可靠传输机制等，所以通信效率比较高。
+
+UDP 协议的应用也非常广泛，比如知名的应用层协议：SNMP、DNS 都是基于 UDP的。一个常用的 UDP 通信的框架如下图所示：
+
+<img src ="https://img-blog.csdnimg.cn/cdb632246b8a45afac85f34ccad84570.png#pic_center" width = 48%>
+
+
+由图可以看出，客户端要发起一次请求，仅仅需要两个步骤（socket 和 sendto），而服务器端也仅仅需要三个步骤即可接收到来自客户端的消息（socket、bind、recvfrom）。和 TCP 通信不同的是，UDP 通信不需要监听（listen）及建立连接（accept）步骤，在创建及套接字后，可以直接使用 `sendto()` 及 `recvform()` 进行数据的发送及接收。
+
+
+### 3.2 UDP Ping服务程序框架
+
+在这个简单的 UDP Ping 服务器程序中，完成套接字创建及绑定后，当接收到消息后进行简单处理（这里是转化为大写），再将消息回传给相应的客户端。
+
+#### 3.2.1 Ping服务端创建UDP套接字
+
 创建UDP套接字，绑定地址包含主机及其端口：
 
 ```python
@@ -497,18 +522,9 @@ serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind(('0.0.0.0', 12000))
 ```
 
+#### 3.2.2 UDP通信中发送与接收数据
 
-### 3.1 UDP Ping服务程序框架
-
-在这个简单的 UDP Ping 服务器程序中，完成套接字创建及绑定后，当接收到消息后进行简单处理（这里是转化为大写），再将消息回传给相应的客户端。
-
-#### 3.1.1 Ping服务端创建UDP套接字
-
-
-
-#### 3.1.2 UDP通信中发送与接收数据
-
-在 UDP 通信中，使用 `sendto()` 函数发送 UDP 数据，将数据发送到套接字，输入参数 address 是形式为 `(host, port)` 的元组，指定远程地址，其中host表示服务器地址，port表示服务器端口号。返回值是发送的字节数。
+在 UDP 通信中，使用 `sendto()` 函数发送 UDP 数据，将数据发送到套接字，输入参数 address 是形式为 `(host, port)` 的元组，指定远程地址，其中 `host` 表示服务器地址，`port` 表示服务器端口号。返回值是发送的字节数。
 
 接收数据使用 `recvfrom()` 函数实现。输入参数为接收缓冲区大小。该函数接收 UDP 数据，与 `recv()` 类似，但返回值是 `(data, address)`。其中 `data` 是包含接收数据的字符串，`address` 是发送数据的套接字地址。
 
@@ -516,7 +532,7 @@ serverSocket.bind(('0.0.0.0', 12000))
 示例如下：
 - 接收数据
 ```python
-msg,addr=udp_server.recvfrom(BUFSIZE)   # 使用套接字对象udp_server的recvfrom()方法接收数据
+msg, addr = udp_server.recvfrom(BUFSIZE)   # 使用套接字对象udp_server的recvfrom()方法接收数据
 ```
 
 - 发送数据
@@ -526,9 +542,47 @@ udp_server.sendto(msg,addr)     # 使用套接字对象udp_server的sendto()方�
 ```
 
 完整的服务器程序一般都处于后台服务状态，通过不断循环等待客户端发送 Ping 消息，经过简单处理后，将消息发给相应的客户端。
+
 在本实验中，为了避免大量资源的消耗，设置了一个接收消息计数器，当接收到消息超过设定值后，服务程序就退出（break）循环。
 
-#### 3.1.3 设置套接字超时时间
+
+```python
+from socket import *
+import random
+
+# 创建UDP套接字
+serverSocket = socket(AF_INET, SOCK_DGRAM)
+# 绑定本机IP地址和端口号
+serverSocket.bind(('', 12000))
+
+num=0
+while True:
+    # 接收客户端消息
+    message, address = serverSocket.recvfrom(1024)
+    # 将数据包消息转换为大写
+    message = message.upper()
+        
+    num=num+1
+    if num>=8:
+        break
+
+    if num % 3 == 1:
+        continue
+    
+    # 将消息传回给客户端
+    serverSocket.sendto(message, address)
+```
+
+### 3.3 客户端创建UDP套接字
+
+
+创建 UDP 套接字：
+
+```python
+udpSocket = socket(AF_INET, SOCK_DGRAM)
+```
+
+#### 3.3.1 设置套接字超时时间
 
 在进行客户端向服务器发送 Ping 消息的过程中，有时候可能会因为网络原因造成一直连不上服务器（如服务器程序没有开启），这时如不手动停止，Socket 可能会一直尝试重连，造成资源的浪费。这就需要设置 `timeout` 来限制重连时间，当 Socket 尝试重连到指定的时间时，就会停止一切操作，并提示达到 `timeout` 设定阈值。
 设置超时时间一般在创建套接字后，在网络通信之前进行。示例如下：
@@ -539,15 +593,15 @@ mysocket.settimeout(10)
 
 代码作用为设定套接字的超时时间为 10 秒
 
-### 3.2 客户端创建UDP套接字
-
-
 客户端程序在创建完套接字后，通过循环向服务器发送消息，然后接收服务器回传的消息，通过计算收到消息及发送消息的时间差，来反映网络的状况。如果超时时间过后还没收到消息，则报出超时异常。
 
-消息编解码
-在网络通信中，网络线路中传输的是字节（二进制格式）流bytes。但在我们发送的消息习惯用字符串string来表示，这时就需要用编码encode()和解码decode()函数来转换。
+#### 3.3.2 客户端向服务器发送消息并接收消息
 
-encode()函数：字符串类型（str）提供的方法，用于将字符串类型转换成 bytes 类型，这个过程也称为“编码”。其语法如下：
+**1. 消息编解码**
+
+在网络通信中，网络线路中传输的是字节（二进制格式）流 `bytes`。但在我们发送的消息习惯用字符串 `string` 来表示，这时就需要用编码 `encode()` 和解码 `decode()` 函数来转换。
+
+`encode()` 函数：字符串类型（str）提供的方法，用于将字符串类型转换成 bytes 类型，这个过程也称为“编码”。其语法如下：
 
 ```python
 str.encode([encoding="utf-8"][,errors="strict"])
@@ -555,11 +609,70 @@ str.encode([encoding="utf-8"][,errors="strict"])
 
 注意，格式中用 [] 括起来的参数为可选参数，也就是说，在使用此方法时，可以使用 [] 中的参数，也可以不使用。
 
+<img src ="https://img-blog.csdnimg.cn/3b4bac058af44eb6979db4e5dcbe3df8.png#pic_center" width = 48%>
 
+示例：
 
-### 3.3 客户端向服务器发送消息并接收消息
+```python
+str.encode()
+```
+采用默认的 UTF-8 字符集将 str 编码为字节流
 
+```python
+str.encode('GBK')
+```
 
+采用指定的 GBK 字符集将 str 编码为字节流
+
+`decode()` 函数：用于将 bytes 类型的二进制数据转换为 string 类型，这个过程也称为“解码”。其格式如下：
+
+```python
+bytes.decode([encoding="utf-8"][,errors="strict"])
+```
+
+示例：
+```python
+bytes.decode()
+```
+
+使用默认的 UTF-8 字符集进行解码为字符串
+
+如果编码时采用的不是默认的 UTF-8 编码，则解码时要选择和编码时一样的格式，否则会抛出异常。
+
+```python
+bytes = str.encode("GBK")
+bytes.decode()  #默认使用 UTF-8 编码，会抛出以下异常。
+bytes.decode("GBK")  #不会抛出异常
+```
+
+在 Ping 客户端程序中，发送消息时将发送消息的序号及发送时间发送到 Ping 服务器，然后接收消息，并将收到消息的时间与发送消息的时间差作为消息的延迟时间进行计算，并打印出来。
+
+```python
+from socket import *
+import time
+
+serverName = '127.0.0.1' # 服务器地址，本例中使用本机地址
+serverPort = 12000 # 服务器指定的端口
+clientSocket = socket(AF_INET, SOCK_DGRAM) # 创建UDP套接字，使用IPv4协议
+clientSocket.settimeout(1) # 设置套接字超时值1秒
+
+for i in range(0, 9):
+    sendTime = time.time()
+    message = ('Ping %d %s' % (i+1, sendTime)).encode()     # 生成数据报，编码为bytes以便发送
+    
+    try:
+        # 将信息发送到服务器
+        clientSocket.sendto(message, (serverName, serverPort))
+        # 从服务器接收信息，同时也能得到服务器地址
+        modifiedMessage, serverAddress = clientSocket.recvfrom(1024)
+    
+        rtt = time.time() - sendTime    # 计算往返时间
+        print('Sequence %d: Reply from %s    RTT = %.3fs' % (i+1, serverName, rtt))         # 显示信息
+    except Exception as e:
+        print('Sequence %d: Request timed out.' % (i+1))
+        
+clientSocket.close()            # 关闭套接字
+```
 
 ____
 
