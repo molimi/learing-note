@@ -7,5 +7,6 @@
 # @lc code=start
 class Solution:
     def largestRectangleArea(self, heights: List[int]) -> int:
+        
 # @lc code=end
 

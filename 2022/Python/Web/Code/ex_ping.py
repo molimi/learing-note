@@ -1,4 +1,4 @@
-# -*- encoding: utf-8 -*-
+# -*- coding: utf-8 -*-
 # @Author: CarpeDiem
 # @Date: 230423
 # @Version: 1.0
@@ -28,30 +28,30 @@ def chesksum(data):
     answer = answer >> 8 | (answer << 8 & 0xff00)   #  主机字节序转网络字节序列（参考小端序转大端序）
     return answer
 
-def request_ping(data_type,data_code,data_checksum,data_ID,data_Sequence,payload_body):
+def request_ping(data_type, data_code, data_checksum, data_ID, data_Sequence, payload_body):
     # 把字节打包成二进制数据
-    imcp_packet = struct.pack('>BBHHH32s',data_type,data_code,data_checksum,data_ID,data_Sequence,payload_body)
+    imcp_packet = struct.pack('>BBHHH32s', data_type, data_code, data_checksum, data_ID, data_Sequence, payload_body)
     icmp_chesksum = chesksum(imcp_packet)  # 获取校验和
     # 把校验和传入，再次打包
-    imcp_packet = struct.pack('>BBHHH32s',data_type,data_code,icmp_chesksum,data_ID,data_Sequence,payload_body)
+    imcp_packet = struct.pack('>BBHHH32s', data_type, data_code, icmp_chesksum, data_ID, data_Sequence, payload_body)
     return imcp_packet
 
 
-def raw_socket(dst_addr,imcp_packet):
+def raw_socket(dst_addr, imcp_packet):
     '''
     连接套接字,并将数据发送到套接字
     '''
     # 实例化一个socket对象，ipv4，原套接字，分配协议端口
-    rawsocket = socket.socket(socket.AF_INET,socket.SOCK_RAW,socket.getprotobyname("icmp"))
+    rawsocket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.getprotobyname("icmp"))
     # 记录当前请求时间
     send_request_ping_time = time.time()
     # 发送数据到网络
-    rawsocket.sendto(imcp_packet,(dst_addr,80))
+    rawsocket.sendto(imcp_packet, (dst_addr, 80))
     # 返回数据
-    return send_request_ping_time,rawsocket,dst_addr
+    return send_request_ping_time, rawsocket, dst_addr
 
 
-def reply_ping(send_request_ping_time,rawsocket,data_Sequence,timeout = 2):
+def reply_ping(send_request_ping_time, rawsocket, data_Sequence, timeout = 2):
     while True:
         # 开始时间
         started_select = time.time()
@@ -83,7 +83,7 @@ def reply_ping(send_request_ping_time,rawsocket,data_Sequence,timeout = 2):
             return -1
         
 
-def dealtime(dst_addr,sumtime,shorttime,longtime,accept,i,time):
+def dealtime(dst_addr, sumtime, shorttime, longtime, accept, i, time):
     sumtime+=time
     print(sumtime)
     if i==4:
@@ -98,7 +98,7 @@ def ping(host):
     data_type = 8 # ICMP Echo Request
     data_code = 0 # must be zero
     data_checksum = 0 # "...with value 0 substituted for this field..."
-    data_ID = 0 #Identifier
+    data_ID = 0 # Identifier
     data_Sequence = 1 #Sequence number
     payload_body = b'abcdefghijklmnopqrstuvwabcdefghi' #data
 
