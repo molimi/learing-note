@@ -336,21 +336,184 @@ Authorization: Basic xxxxxxxxxx.
 
 解压缩文件 http-ethereal-trace-1。这个zip文件中的数据是由本书作者之一使用Wireshark在作者电脑上收集的，并且是按照Wireshark实验中的步骤做的。 如果你下载了数据文件，你可以将其加载到Wireshark中，并使用文件菜单选择打开并查看数据，然后选择http-ethereal-trace-1文件。 结果显示应与图1类似。（在不同的操作系统上，或不同的Wireshark版本上，Wireshark的界面会不同）。
 
+<img src ="https://img-blog.csdnimg.cn/3a000d563fc045b68266f772ee0ed1e1.png#pic_center" width = 48%>
+
+1. 您的浏览器是否运行HTTP 版本1.0 或1.1？服务器运行的是什么版本的
+HTTP？
+答：服务器运行HTTP1.1，我浏览器运行HTTP1.1。
+
+<center class = "half"><img src ="https://img-blog.csdnimg.cn/a39590297bd0469d95357666e36b880c.png#pic_left" width = "48%"><img src = "https://img-blog.csdnimg.cn/2e34ba6589ff44b69e69f3c55ac6594d.png#pic_left"  width = "48%"></center></p>
+
+2. 您的浏览器指示哪些语言（如果有）可以接受服务器？
+ANS:我浏览器仅能接收 en-us, en; q=0.5
+
+<img src ="https://img-blog.csdnimg.cn/ea6ccfe051194a6095af1cff9263b854.png#pic_center" width = 48%>
+
+
+3. 您的计算机的IP地址是什么？ gaia.cs.umass.edu服务器地址呢？
+答：我的IP：192.168.1.102；gaia.cs.umass.edu的IP：128.119.245.12
+
+<img src ="https://img-blog.csdnimg.cn/7284ad61b5c84c4cabc168d0fda99f5a.png#pic_center" width = 48%>
+
+
+4. 服务器返回到浏览器的状态代码是什么？
+
+答：服务器返回200 OK 代码
+
+<img src ="https://img-blog.csdnimg.cn/53d5bea9d6064d42bdf879a71eb551ac.png#pic_center" width = 48%>
+
+
+5. 服务器上HTML文件的最近一次修改是什么时候？
+
+<img src ="https://img-blog.csdnimg.cn/958c925e6cc149c986b811dea911dbdc.png#pic_center" width = 48%>
+
+
+6. 服务器返回多少字节的内容到您的浏览器？
+
+答：返回了 73Byte 的内容
+
+<img src ="https://img-blog.csdnimg.cn/9faaaee14f9245a6821787f0d7513621.png#pic_center" width = 48%>
+
+7. 通过检查数据包内容窗口中的原始数据，你是否看到有协议头在数据包列表窗口中未显示？ 如果是，请举一个例子。
+
+答：没有。仅有这四条HTTP请求。
+
+<img src ="https://img-blog.csdnimg.cn/34dbf5b9aecb4a33897f3b4a80205a18.png#pic_center" width = 48%>
 
 
 
 ### 2.2 HTTP的条件 get/response交互
 
+大多数Web浏览器使用对象缓存，从而在检索HTTP对象时执行条件GET。执行以下步骤之前，请确保浏览器的缓存为空。（要在Firefox下执行此操作，请选择“工具” - > “清除最近历史记录”，然后检查缓存框，对于Internet Explorer，选择“工具” - >“Internet选项” - >“删除文件”；这些操作将从浏览器缓存中删除缓存文件。 现在按下列步骤操作：
+
+* 启动您的浏览器，并确保您的浏览器的缓存被清除，如上所述。
+* 启动Wireshark数据包嗅探器。
+* 在浏览器中输入以下URL http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html 您的浏览器应显示一个非常简单的五行HTML文件。
+* 再次快速地将相同的URL输入到浏览器中（或者只需在浏览器中点击刷新按钮）。
+* 停止Wireshark数据包捕获，并在display-filter-specification窗口中输入“http”，以便只捕获HTTP消息，并在数据包列表窗口中显示。
+* （注意：如果无法连接网络并运行Wireshark，则可以使用http-ethereal-trace-2数据包跟踪来回答以下问题。）
+
+1. 检查第一个从您浏览器到服务器的HTTP GET请求的内容。您在HTTP GET中看到了“IF-MODIFIED-SINCE”行吗？
+答：没看到
+
+<img src ="https://img-blog.csdnimg.cn/2e18933edcb94916b659d4dbec9cfa31.png#pic_center" width = 48%>
 
 
+9. 检查服务器响应的内容。服务器是否显式返回文件的内容？ 你是怎么知道的？
+答：是，查看 `Line-based text data: text/htm1 10 lines`
+
+
+<img src ="https://img-blog.csdnimg.cn/8a7dd3631d904810bbdbddebf88c5f18.png#pic_center" width = 48%>
+
+
+10.  现在，检查第二个HTTP GET请求的内容。 您在HTTP GET中看到了“IF-MODIFIED-SINCE:”吗？ 如果是，“IF-MODIFIED-SINCE:”头后面包含哪些信息？
+
+答：看到了，发现后面的值刚好是上次得到的服务器最后修改这个文件的时间。
+
+<img src ="https://img-blog.csdnimg.cn/57d5b629901849e0bdb53c1bda840922.png#pic_center" width = 48%>
+
+
+意思是我们在请求时会发送给服务器上次它修改这个文件最后一次时间，如果服务器发现仍然没有修改这个文件，就会返回 304 文件未改变的信息，调用本地cache 缓存，如果改变就会重新得到。
+
+<img src ="https://img-blog.csdnimg.cn/6186273b7f7c4e35a6d03cf5d5d56369.png#pic_center" width = 48%>
+
+
+11.  针对第二个HTTP GET，从服务器响应的HTTP状态码和短语是什么？服务器是否明确地返回文件的内容？请解释。
+
+答：很显然不会有的，因为服务器未改变文件，所以返回304 Modified，也就是304 未改变，因此我们不会得到请求信息的，直接调用本地的cache。
+
+<img src ="https://img-blog.csdnimg.cn/dd1bf43895494c72a3765557ab4e308c.png#pic_center" width = 48%>
 
 ### 2.3 检索长文件
+
+在我们到目前为止的例子中，检索的文档是简短的HTML文件。 接下来我们来看看当我们下载一个长的HTML文件时会发生什么。 按以下步骤操作：
+
+* 启动您的浏览器，并确保您的浏览器缓存被清除，如上所述。
+* 启动Wireshark数据包嗅探器
+* 在您的浏览器中输入以下URL http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file3.html 您的浏览器应显示相当冗长的美国权利法案。
+* 停止Wireshark数据包捕获，并在display-filter-specification窗口中输入“http”，以便只显示捕获的HTTP消息。
+* （注意：如果无法连接网络并运行Wireshark，则可以使用http-ethereal-trace-3数据包跟踪来回答以下问题。）
+
+
+1.  您的浏览器发送多少HTTP GET请求消息？哪个数据包包含了美国权利法案的消息？
+
+答：我的浏览器仅仅发送了一个HTTP GET 请求信息，在追踪的数据包中，第 14 个
+包含请求GET message 的 Bill 或 Rights。
+
+<img src ="https://img-blog.csdnimg.cn/53b6dd72aa904326aa49217d5f7670a3.png#pic_center" width = 48%>
+
+
+
+13. 哪个数据包包含响应HTTP GET请求的状态码和短语？
+
+答：第 14 个包包括相关联的状态代码和短语，状态代码是200 OK。
+
+<img src ="https://img-blog.csdnimg.cn/61c2070a77cc4d1c888d5a4ef29e3d46.png#pic_center" width = 48%>
+
+
+14. 响应中的状态码和短语是什么？
+
+答：HTTP/1.1 200 OK\r\n：请求的状态码：200 短语: OK
+
+
+15. 需要多少包含数据的TCP段来执行单个HTTP响应和权利法案文本？
+
+答：从图中看出我们有 4 个TCP 协议承载单个 HTTP 响应和权利法案的文本。
+
+<img src ="https://img-blog.csdnimg.cn/be4af513da8d492d8538769ebf438357.png#pic_center" width = 48%>
 
 
 ### 2.4 具有签入对象的HTML文档
 
+现在我们已经看到Wireshark如何显示捕获的大型HTML文件的数据包流量，我们可以看看当浏览器使用嵌入的对象下载文件时，会发生什么，即包含其他对象的文件（在下面的例子中是图像文件） 的服务器。
+执行以下操作：
+
+- 启动您的浏览器。
+- 启动Wireshark数据包嗅探器。
+- 在浏览器中输入以下URL http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file4.html 您的浏览器应显示包含两个图像的短HTML文件。这两个图像在基本HTML文件中被引用。也就是说，图像本身不包含在HTML文件中；相反，图像的URL包含在已下载的HTML文件中。如书中所述，您的浏览器将不得不从指定的网站中检索这些图标。我们的出版社的图标是从 www.aw-bc.com 网站检索的。而我们第5版（我们最喜欢的封面之一）的封面图像存储在manic.cs.umass.edu服务器。
+- 停止Wireshark数据包捕获，并在display-filter-specification窗口中输入“http”，以便只显示捕获的HTTP消息。
+- （注意：如果无法连接网络并运行Wireshark，则可以使用http-ethereal-trace-4数据包跟踪来回答以下问题。）
+
+1.  您的浏览器发送了几个HTTP GET请求消息？ 这些GET请求发送到哪个IP地址？
+
+答：发送了3 个HTTP GET 请求消息，这些GET 请求发送到了一个 Internet 地址：128.119.245.12
+
+<img src ="https://img-blog.csdnimg.cn/ea15ccf829c94672869f6d152253e21d.png#pic_center" width = 48%>
+
+17. 浏览器从两个网站串行还是并行下载了两张图片？请说明。
+
+答：由于这些包都是先后发出的，有时间差，所以是串行下载
+
+<img src ="https://img-blog.csdnimg.cn/e5abdab27890441494f8fe17a2dbc601.png#pic_center" width = 48%>
 
 
 ### 2.5 HTTP认证
 
+最后，我们尝试访问受密码保护的网站，并检查网站的HTTP消息交换的序列。URL http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html 是受密码保护的。用户名是“wireshark-students”（不包含引号），密码是“network”（再次不包含引号）。所以让我们访问这个“安全的”受密码保护的网站。执行以下操作：
 
+* 请确保浏览器的缓存被清除，如上所述，然后关闭你的浏览器，再然后启动浏览器
+* 启动Wireshark数据包嗅探器。
+* 在浏览器中输入以下URL http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wiresharkfile5.html 在弹出框中键入所请求的用户名和密码。
+* 停止Wireshark数据包捕获，并在display-filter-specification窗口中输入“http”，以便只显示捕获的HTTP消息。
+* （注意：如果无法连接网络并运行Wireshark，则可以使用http-ethereal-trace-5数据包跟踪来回答以下问题。）
+
+18. 对于您的浏览器的初始HTTP GET消息，服务器响应（状态码和短语）是什么响应？
+
+答：服务器先返回401 Authorization Required，即未授权，要求登陆才能访问
+
+<img src ="https://img-blog.csdnimg.cn/08fb3868075346b9bb8522691f86fe0a.png#pic_center" width = 48%>
+
+
+1.  当您的浏览器第二次发送HTTP GET消息时，HTTP GET消息中包含哪些新字段？
+
+答：访问内容
+
+<img src ="https://img-blog.csdnimg.cn/ce3145d94470494293c56cd75e916ba3.png#pic_center" width = 48%>
+
+提示：新版 Wireshark 自带给base64 加密的用户名和密码解码，因此就不用网站工具了。
+
+
+
+## 参考
+- 第二章Wireshark实验1：HTTP：[https://blog.csdn.net/qq_41708792/article/details/102495369](https://blog.csdn.net/qq_41708792/article/details/102495369)
+- 《计算机网络—自顶向下方法》学习笔记：[https://github.com/moranzcw/Computer-Networking-A-Top-Down-Approach-NOTES](https://github.com/moranzcw/Computer-Networking-A-Top-Down-Approach-NOTES)
