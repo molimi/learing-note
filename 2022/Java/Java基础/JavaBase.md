@@ -8,8 +8,7 @@ Java介于编译型语言和解释型语言之间。编译型语言如C、C++，
 
 1) JDK的全称(Java Development Kit————Java 开发工具包)
 JDK = JRE + java的开发工具[java, javac,javadoc,javap等]
-2) JDK 是提供给Java开发人员使用的，其中包含了java的开发工具，也包括了JRE。所以安装了JDK，就不用在单独
-安装JRE了。
+2) JDK 是提供给Java开发人员使用的，其中包含了java的开发工具，也包括了JRE。所以安装了JDK，就不用在单独安装JRE了。
 
 **2. JRE基本介绍**
 
