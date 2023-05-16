@@ -1,6 +1,3 @@
-
-
-
 ## 1 以太网
 ### 1.1 介绍
 以太网是现实世界中最普遍的一种计算机网络。以太网有两类：第一类是经典以太网，第二类是交换式以太网，使用了一种称为交换机的设备连接不同的计算机。
@@ -92,11 +89,7 @@ Ethernet II 类型以太网的帧结构：
 
 以太网向网络层提供 2 种服务。首先是无连接服务，也就是适配器之间发送接收真，发送网卡和接收网卡间不需要“握手”，类似于 IP 协议和 UDP 协议。第二是不可靠服务，虽然接收适配器执行 CRC 校验，但是这个校验并不发送类似 ACK 的确认帧。虽然将到时传递到网络层的数据流出现间隙，这种传输方式可以使得以太网可以简洁且便宜。对于这种间隙，接收方遇到查错帧就直接丢弃，若要修复丢弃帧的数据，需要依靠类似 TCP 这样的高层协议。
 
-
-
-
 ## 2 ARP协议
-
 ### 2.1 原理分析
 由于 IP 地址是网络层地址，MAC 地址是链路层地址，因此当我需要传输数据时就需要对地址进行转换。在同一个 LAN 里如何在已知目的 IP 地址的前提下确定 MAC 地址？这就需要 ARP 协议。这个好像和 DNS 有些相似之处，DNS 是在因特网中进行主机的主机名解析，ARP 是在一个子网上的主机和路由器接口解析 IP 地址。
 
@@ -120,7 +113,6 @@ ARP 协议是通过报文工作的，报文格式如下：
 
 <img src ="https://img-blog.csdnimg.cn/09d9155e20d848578a2f10d0ca2b33fd.png#pic_center" width = 48%>
 
-
 ### 2.2 子网外的地址解析
 
 在相同子网内的 ARP 很好理解，那么当子网中的主机要向子网外发送网络层数据报时，ARP 又是怎么工作的呢？对于主机，每台主机只有一个 IP 地址和一个适配器，对于一台路由器来说，每个接口都有一个 IP 地址，也都有一个 ARP 模块和一个适配器。
@@ -129,7 +121,6 @@ ARP 协议是通过报文工作的，报文格式如下：
 
 当一个子网向另一个子网发送 IP 数据报时，发送主机向适配器传递，此时应该传递什么 MAC 地址呢？明显不是目的主机的 MAC 地址，因为在所在子网中该地址与所有的适配器之间都不匹配，那就只好丢弃了。所以适当的 MAC 地址应该是路由器接口的适配器地址，但是路由器接口的 MAC 地址怎么获取？ARP 嘛！
 接下来路由器就需要将数据报发到正确的目的地去，也就是要发到哪个接口去呢？可以查询路由器的转发表，根据转发表送到对应的接口去。接口收到数据包之后，适配器把数据报封装到新的帧中，发送到下一个子网去，下一个子网的 MAC 地址怎么确定？再搞个 ARP 就行了！
-
 
 ### 2.3 ARP 代理
 
@@ -143,8 +134,167 @@ ARP 协议是通过报文工作的，报文格式如下：
 
 从 ARP 代理的原理可以看出来：IP - MAC 的对应信息很容易被伪造！黑客可以伪造 ARP 应答数据帧而欺骗 ARP 请求者，从而达到截获数据的目的。
 
-
-
 > RARP 与 ARP 是相反的关系，用于将 MAC 地址转换为 IP 地址。对应于 ARP，RARP 请求以广播方式传送，而 RARP 应答一般是单播传送的。
 > 某些设备，比如无盘机在启动时可能不知道自己的 IP 地址，它们可以将自己的 MAC 地址使用 RARP 请求广播出去，RARP 服务器就会响应并回复无盘机的 IP 地址。
 
+## 2 实验分析
+### 2.1 以太网帧分析
+**实验步骤**
+
+1. 首先，确保浏览器的缓存为空(清除浏览器缓存)，启动 Wireshark 数据包嗅探器。
+<img src ="https://img-blog.csdnimg.cn/830e79e422c447a4b7e096a2492b6c8c.png#pic_center" width = 48%>
+
+2. 打开以下 URL “http://gaia.cs.umass.edu/wireshark-labs/HTTP-ethereal-lab-file3.html” 您的浏览器应显示一段长文档。
+
+<img src ="https://img-blog.csdnimg.cn/369facea4ec3452e984c530edd31c4c1.png#pic_center" width = 48%>
+
+
+3. 停止 Wireshark 数据包捕获，找到您向 gaia.cs.umass.edu 的 HTTP GET 消息的数据包编号以及 gaia.cs.umass.edu 相应您的 HTTP 回应。
+
+<img src ="https://img-blog.csdnimg.cn/9d7d5ed1f8044b98badea7fb6aa4f89c.png#pic_center" width = 48%>
+
+干扰巨大，还是看看现成的包吧。
+
+4. 打开实验并且选中分析-启用的协议-把 IPV4 的勾去掉，仅显示有关 IP 以下协议的信息。
+
+<p><center class = "half"><img src ="https://img-blog.csdnimg.cn/c48a3f78319542c19e5b5e1750d61965.png#pic_left" width = "42%"><img src = "https://img-blog.csdnimg.cn/ce26ce0a3cbf4f56859d7efa200152b8.png#pic_left"  width = "50%"></center></p>
+
+5. 选择包含 HTTP GET 消息的以太网帧，在数据包详细信息窗口中展开以太网信息，以太网帧的内容（标题以及有效负载）显示在数据包内容窗口中。
+
+**问题解答**
+
+根据包含 HTTP GET 消息的以太网帧进行分析：
+
+<img src ="https://img-blog.csdnimg.cn/8d1f55e2398a4fc5ac88fb431f9a2abc.png#pic_center" width = 48%>
+
+
+1. 你的电脑 48 位的地址是多少
+答：源地址：AmbitMic_a9:3d:68 (00:d0:59:a9:3d:68)
+
+<img src ="https://img-blog.csdnimg.cn/5cb72e66772d4c13a40895fbf5718a68.png#pic_center" width = 48%>
+
+2. 以太网帧中的 48 位目标地址是什么？这是 gaia.cs.umass.edu 的以太网地址吗？
+答：目的地址: LinksysG_da:af:73 (00:06:25:da:af:73)。这个不是 gaia.cs.umass.edu 的以太网地址，这个应该是出子网的路由器的地址。
+
+<img src ="https://img-blog.csdnimg.cn/d75bd3180bfe4e6a8c69ab180a33b526.png#pic_center" width = 48%>
+
+
+3. 以太网帧上层协议 16 进制值是什么?这对应的上层协议是什么？
+答：0x0800，表示上层协议是 IPv4。
+
+<img src ="https://img-blog.csdnimg.cn/f7271397f0c8475482a825ec484bf8d4.png#pic_center" width = 48%>
+
+<img src ="https://img-blog.csdnimg.cn/af0791baf9b3490991ff0e785c39c409.png#pic_center" width = 48%>
+
+4. 从以太帧的开始，一直到“GET”中的 ASCII“G”出现在以太网帧中為止，有多少字节？
+答：有 16 × 3 + 6 = 54 Byte
+
+<img src ="https://img-blog.csdnimg.cn/ac538fc5037d4e8ab76415481640d1e2.png#pic_center" width = 48%>
+
+5. 这个帧中，以太网源地址的值是多少？这是你的计算机的地址，还是 gaia.cs.umass.edu 的地址？拥有这个以太网地址的设备是什么？
+答：源地址：LinksysG_da:af:73 (00:06:25:da:af:73)，这个应该是出子网的路由器的地址。
+
+<img src ="https://img-blog.csdnimg.cn/b344f173c48f4264b38c590689d6d42b.png#pic_center" width = 48%>
+
+
+6. 以太网帧中的目的地址是什么？这是您的计算机的以太网地址吗？
+答：目的地址：Destination: AmbitMic_a9:3d:68 (00:d0:59:a9:3d:68)，这个是我的计算机的以太网地址。
+
+<img src ="https://img-blog.csdnimg.cn/052875a372764cc38adbdc0d47503ba0.png#pic_center" width = 48%>
+
+
+7. 以太网帧上层协议 16 进制值是什么?这对应的上层协议是什么？
+答：0x0800，表示上层协议是 IPv4。
+
+<img src ="https://img-blog.csdnimg.cn/ced4a733744f41d59d6674349e88fbf3.png#pic_center" width = 48%>
+
+8. 从以太帧的开始，一直到 “OK” 中的 ASCII“O” 出现在以太网帧中为止，有多少字节？
+答：有 16 × 4 + 4 = 68 Byte
+<img src ="https://img-blog.csdnimg.cn/04ec7a50259540ce97693f52890f45f5.png#pic_center" width = 48%>
+
+### 2.2 地址解析协议
+
+ARP 协议通常在您的计算机上维护 IP 到以太网地址转换对的缓存 .arp 命令（在 MSDOS 和 Linux / Unix 中）用于查看和操作此缓存的内容。 arp 命令用于查看和操作 ARP 缓存内容，而 ARP 协议定义了发送和接收的消息的格式和含义，并定义了对消息传输和接收所采取的操作。
+现在查看计算机上 ARP 缓存的内容，没有参数的 Windows arp 命令将显示计算机上 ARP 缓存的内容，运行 ARP 命令。
+
+1. 打开命令提示符显示arp 缓存，`arp -a`
+
+<img src ="https://img-blog.csdnimg.cn/ecf20d8196204c30a2dfdc255611aee1.png#pic_center" width = 48%>
+
+2. 管理员打开命令提示符，清除arp 缓存，`arp -d *`
+
+<img src ="https://img-blog.csdnimg.cn/fb28a58494cc466b98484d4214695d82.png#pic_center" width = 48%>
+
+3. 确保浏览器的缓存是空的，启动 Wireshark 捕捉封包。
+
+4. 打开以下 URL “http://gaia.cs.umass.edu/wireshark-labs/HTTP-ethereal-lab-file3.html”，你的浏览器应该再次显示长文档。
+
+5. 同样设置不显示 IP 和更高层协议
+
+**问题解答**
+
+9. 每个列值的含义是什么？
+答：按照颜色分别是：网卡、路由 IP 和 MAC 地址、广播地址、组播地址。
+
+<img src ="https://img-blog.csdnimg.cn/d30c909bf4504383be801f88c744e14a.png#pic_center" width = 48%>
+
+10.  包含 ARP 请求消息的以太网帧中源和目标地址的十六进制值是什么？
+答：目的地址: Broadcast (ff:ff:ff:ff:ff:ff)；源地址: AmbitMic_a9:3d:68 (00:d0:59:a9:3d:68)
+
+<img src ="https://img-blog.csdnimg.cn/800c8ee51de242fa88a3290a4c5ddbbe.png#pic_center" width = 48%>
+
+11. 以太网帧上层协议 16 进制值是什么?
+答：0x0806，表示上层协议是 ARP。
+<img src ="https://img-blog.csdnimg.cn/81d9a25e992c4a60ba685b9921c80a27.png#pic_center" width = 48%>
+
+
+12. 分析 ARP 请求
+
+<img src ="https://img-blog.csdnimg.cn/ca803198273e4a129ad8ab7b396af32f.png#pic_center" width = 48%>
+
+<img src ="https://img-blog.csdnimg.cn/ce86e4228fc94c5ba9671f1ec3a9fc64.png#pic_center" width = 48%>
+
+
+a) ARP 操作码字段开始从以太网帧的最开始有多少字节？
+答：16 + 5 = 21 Byte
+
+<img src ="https://img-blog.csdnimg.cn/405e5f39c5ee4e2aa15d3bc2a90d2cf0.png#pic_center" width = 48%>
+
+b) 在进行 ARP 请求的以太网帧的 ARP 负载部分中，操作码字段的值是多少？
+答：操作码的值为 1。见上图
+
+c) ARP 消息是否包含发送方的 IP 地址？
+答：ARP 消息包含发送方的 IP 地址。
+
+<img src ="https://img-blog.csdnimg.cn/3505d672d3d645adaaf9a8b41f037372.png#pic_center" width = 48%>
+
+d) 在 ARP 请求中从哪里看出我们要查询相应 IP 的以太网地址?
+
+<img src ="https://img-blog.csdnimg.cn/e547ea3b5fa24dd78d5394c7fb890b1e.png#pic_center" width = 48%>
+
+
+13. 找到相应 ARP 请求的而发送 ARP 回复。
+
+a) ARP 操作码字段开始从以太网帧的最开始有多少字节？
+16 + 5 = 21 Byte
+b) 在进行 ARP 响应的以太网帧的 ARP 负载部分中，操作码字段的值是多少？
+操作码的值为 2。
+
+<img src ="https://img-blog.csdnimg.cn/5a4bea3328ee46efbc368fc5db6fd833.png#pic_center" width = 48%>
+
+14. 包含 ARP 回复消息的以太网帧中的源地址和目标地址的十六进制值是多少？
+答：目的地址: AmbitMic_a9:3d:68 (00:d0:59:a9:3d:68)；源地址: LinksysG_da:af:73 (00:06:25:da:af:73)
+
+<img src ="https://img-blog.csdnimg.cn/208dd0a8f79341af868b01d387b0683f.png#pic_center" width = 48%>
+
+
+15. 在作者抓包结果中，他有两台电脑，一台运行 wireshark 进行抓包，一台没有，那么为什么运行 wireshark 那台电脑发送 ARP 请求得到了应答，另外一台电脑的 ARP 请求没有得到应答?
+答：因为 ARP 查询分组是广播，而响应分组是单播。
+
+
+____
+
+## 参考
+- Ethernet and ARP及Wireshark实验：[https://www.cnblogs.com/linfangnan/p/12867566.html](https://www.cnblogs.com/linfangnan/p/12867566.html)
+- ARP(Address Resolution Protocol)地址解析协议：[https://www.lanqiao.cn/courses/98/learning/?id=496&compatibility=false](https://www.lanqiao.cn/courses/98/learning/?id=496&compatibility=false)
+- 《计算机网络－自顶向下方法》笔记：[https://github.com/moranzcw/Computer-Networking-A-Top-Down-Approach-NOTES](https://github.com/moranzcw/Computer-Networking-A-Top-Down-Approach-NOTES)
