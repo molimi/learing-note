@@ -68,12 +68,45 @@ NAT 在得到广泛应用的同时，也存在着很多争议，主要包括以�
 
 
 
+## 2 实验分析
 
 
+用在家庭网络的一个客户端 PC 发送到 www.baidu.com 简单 HTTP 请求并且捕获它。在家庭网络中，家庭网络路由器会提供 NAT 服务。
+下图显示我们的 Wireshark NAT 实验抓包收集方案。
+
+<img src ="https://img-blog.csdnimg.cn/5267f6d443274633b962589b956acff3.png#pic_center" width = 48%>
+
+在该客户端 PC 进行抓包，并存为NAT_home_side文件。同样我们因为需要研究 NAT 路由器发送到 ISP 网络的数据包，因此将会一个上图中的未展示 PC 收集从 NAT 路由到 ISP 网络的第二数据包。路由左侧连接 ISP 网络的集线器将会起到连接 NAT 路由器和 ISP 的第一跳路由（第一级路由的作用）。我们将位于  NAT 路由连 ISP 网络的 Wireshark 的抓包结果称为NAT_ISP_side。
+
+### 2.1 NAT HOME分析
+1. 根据收集到的信息，我们可以找到客户端的 IP 地址：
+
+<img src ="https://img-blog.csdnimg.cn/1caaf77829c342f8a2cf331fc390db31.png#pic_center" width = 48%>
+
+客户端实际上与几个不同的 Google 服务器通信，以实现“安全浏览”。提供主要 Google 网页的服务器地址是 64.233.169.104，为了仅仅显示客户端的请求和服务器的响应，请在 Wireshark 过滤器输入过滤式 `http && ip.addr == 64.233.169.104`。由此，我们可以知道在不同时间的客户端发送到 Google 服务器的 IP 数据报上的源 IP 地址、目标 IP 地址、TCP 源和目标端口。
+
+<img src ="https://img-blog.csdnimg.cn/ab8f2b57ac9741088547cbe6866e8fe5.png#pic_center" width = 48%>
+
+例如：选择在 7.109267s 时间的客户端发送到 Google 服务器（其 IP 地址为64.233.169.104）的 HTTP GET。承载此 HTTP GET 的 IP 数据报上的源 IP 地址192.168.1.100；端口 4335。目的 IP64.233.169.104；端口 80。
 
 
+2. 找到 Google 服务器收到相应状态码的时间，以及其他信息：
 
+<img src ="https://img-blog.csdnimg.cn/580239cc1de04172beb0e6ab54823b0e.png#pic_center" width = 48%>
 
+例如：7.158797s 时从 Google 服务器收到相应的状态码 200、状态 OK 的 HTTP 响应消息。
+携带状态码200、状态 OK 的 HTTP 响应消息的 IP 数据报上的源和目标 IP 地址64.233.169.104，端口 80；以及 TCP 源 IP地址192.168.1.100，端口 4335。
+
+### 2.2 NAT ISP
+1. 根据打开收集到的跟踪文件，同样在 Wireshark 过滤器输入过滤式 `http && ip.addr == 64.233.169.104`，我们可以找到跟刚才客户端相应时间，同样目的地发送的 HTTP GET 消息出现在 NAT_ISP_side 跟踪文件中的时间。
+
+<img src ="https://img-blog.csdnimg.cn/122962eeacaa4fd3810106fdac41a963.png#pic_center" width = 48%>
+
+例如：找到跟刚才客户端 7.109267s 同样目的地发送的 HTTP GET 消息，该消息出现在NAT_ISP_side跟踪文件中的时间是 6.069168s；承载此 HTTP GET 消息的 IP 数据报的源 IP71.192.34.104，端口 4335；目的 IP64.233.169.104，端口 80。
+
+2. 对比两个收集到的跟踪文件，可以发现 HTTP GET 消息中的任何字段都没有更改。
+
+<img src ="https://img-blog.csdnimg.cn/58b1377fb4484f5baf80fb6844fc3223.png#pic_center" width = 48%>
 
 
 
