@@ -68,14 +68,16 @@ clientSocket.sendall(('MAIL FROM: <' + fromaddress + '>\r\n').encode())
 recv = clientSocket.recv(1024).decode()
 print(recv)
 if (recv[:3] != '250'):
-	print('250 reply not received from server')
+	print('250 reply not received from server') 
 
 # Send RCPT TO command and print server response.
 clientSocket.sendall(('RCPT TO: <' + toaddress + '>\r\n').encode())
 recv = clientSocket.recv(1024).decode()
 print(recv)
 if (recv[:3] != '250'):
-	print('250 reply not received from server')
+	print('250 reply not received from server'
+       
+	   )
 
 # Send DATA command and print server response.
 clientSocket.send('DATA\r\n'.encode())
