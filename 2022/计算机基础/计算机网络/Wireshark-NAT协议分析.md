@@ -72,6 +72,7 @@ NAT 在得到广泛应用的同时，也存在着很多争议，主要包括以�
 
 
 用在家庭网络的一个客户端 PC 发送到 www.baidu.com 简单 HTTP 请求并且捕获它。在家庭网络中，家庭网络路由器会提供 NAT 服务。
+
 下图显示我们的 Wireshark NAT 实验抓包收集方案。
 
 <img src ="https://img-blog.csdnimg.cn/5267f6d443274633b962589b956acff3.png#pic_center" width = 48%>
@@ -108,8 +109,70 @@ NAT 在得到广泛应用的同时，也存在着很多争议，主要包括以�
 
 <img src ="https://img-blog.csdnimg.cn/58b1377fb4484f5baf80fb6844fc3223.png#pic_center" width = 48%>
 
+### 2.3 回答问题
+
+下载作者抓包结果并且解压打开进行分析
+
+1. 客户端的IP 地址是多少？
+答：192.168.1.
+
+<img src ="https://img-blog.csdnimg.cn/6f0f7c8ce81044f8ad61afd8b267df05.png#pic_center" width = 48%>
+
+2. 客户端实际上与几个不同的 Google 服务器通信，以实现"安全浏览"。提供主要 Google 网页的服务器地址是 `64.233.169.104`，为了仅仅显示客户端的请求和服务器的响应，请在 Wireshark 过滤器输入以下过滤式 `http && ip.addr == 64.233.169.104`。
+答：见下图
 
 
+3. 请选择在 7.109267s 时间的客户端发送到 Google 服务器（其 IP 地址为 IP 地址 `64.233.169.104`）的 HTTP GET。承载此 HTTP GET 的 IP 数据报上的源 IP 地址和目标 IP 地址以及 TCP 源和目标端口是什么？
+答：源IP：192.168.1.100，端口：4335；目的IP：64.233.169.104，端口：80
+
+<img src ="https://img-blog.csdnimg.cn/a3aafd197b754692850fec3d924e861d.png#pic_center" width = 48%>
+
+4. 什么时候从 Google 服务器收到相应的状态码200、状态 OK 的 HTTP 响应消息？携带状态码200、状态 OK 的 HTTP 响应消息的 IP 数据报上的源和目标 IP 地址以及 TCP 源和目标端口是什么？
+答：时间 7.158797 s；源 IP：64.233.169.104，端口：80；目的 IP：192.168.1.100，端口：4335
+<img src ="https://img-blog.csdnimg.cn/90c96d3ba97849a98ada0621678b91dc.png#pic_center" width = 48%>
 
 
+5. 回想一下，在将 GET 请求发送到 HTTP 服务器之前，TCP 必须首先使用三次SYN/ACK消息建立连接。在什么时间客户端发送了含有TCP SYN 的报文建立连接消息用于发送在7.109267s 的 GET 请求？TCP SYN 报文的源 IP 地址和目标 IP 地址以及源端口和目标端口是什么？为响应 SYN 报文而发送的 ACK 报文的源和目标 IP 地址以及源和目标端口是什么？在客户端收到此 ACK 报文什么时间？
+答：这里使用了 tcp 和 ip 双重过滤器找到了结果。SYN 报文——时间：7.075657 s；源IP：192.168.1.100，端口：4335；目的IP：64.233.169.104，端口：80。SYN ACK 报文——时间：7.108986 s；源IP：64.233.169.104，端口：80，目的IP：192.168.1.100，端口：4335。
+
+<img src ="https://img-blog.csdnimg.cn/753882a15cbc4c3983c8c8187b7f16a2.png#pic_center" width = 48%>
+
+6. 在 NAT_ISP_side 跟踪文件中，找到跟刚才客户端 7.109267s 同样目的地发送的 HTTP GET 消息（这个时间是在 NAT_home_side 跟踪文件中记录的时间）。该消息何时出现在 NAT_ISP_side 跟踪文件中？承载此HTTP GET 消息的IP 数据报的源和目标 IP 地址以及 TCP 源和目标端口是什么？与您对上述问题3 的回答相比，哪些字段相同，哪些字段不同？
+答：出现时间：6.069168s；源IP：71.192.34.104，端口：4335，目的IP：64.233.169.104，端口：80
+
+<img src ="https://img-blog.csdnimg.cn/54d91297bc5e4d00b6eedfa823b18abd.png#pic_center" width = 48%>
+
+
+7. HTTP GET 消息中的任何字段是否已更改？携带 HTTP GET 的 IP 数据报中的以下哪个字段发生了变化：版本，标题长度，标志，校验和。如果这些字段中的任何一个发生了变化，请说明为什么。
+答：比对未发现HTTP GET 消息字段更改。
+
+<img src ="https://img-blog.csdnimg.cn/b785f467042d4bd1bc57f8999e7c062e.png#pic_center" width = 48%>
+
+但是在IP 封包中生存时间，校验和，发送源IP 均已更改。因为NAT 路由会接收该网域的客户端PC 流量，解包处理IP 封包，并且进行TTL-1（经过每个路由器生存时间-1，当为0 时被舍弃），且重新计算校验和并且以自己源头重新封包进行转发。
+
+<img src ="https://img-blog.csdnimg.cn/f50745bda6b7454880abf247adbd245f.png#pic_center" width = 48%>
+
+
+8. 在 NAT_ISP_side 跟踪文件中，从 Google 服务器收到的第一条 HTTP 200 OK 消息在
+什么时间？携带此 HTTP 200 OK 消息的 IP 数据报上的源和目标 IP 地址以及 TCP 源和目标端口是什么？与您第 4 问回答的 NAT_home_side 结果相比哪些字段相同，哪些字段不同？
+答：时间 6.117570s，源IP：64.233.169.104，端口：80，目的IP：71.192.34.104，端口：4335。比对除TCP 校验码以外未见承载的TCP 报文有何不同，除此以外IP 封包不同，原因请见上一题。
+
+<img src ="https://img-blog.csdnimg.cn/fe6fa54ae349444fa94c75798828aa80.png#pic_center" width = 48%>
+
+9. 在 NAT_ISP_side 跟踪文件中，跟上面的问题 5 相同地址的客户端到服务器 TCP SYN 报文和服务器到客户端 TCP ACK 报文在什么时间出现？这两个段的源和目标 IP 地址以及源和目标端口是什么？与您的问题 5 相比，哪些字段相同，哪些字段与不同？
+答：同样这里使用了 tcp 和 ip 双重过滤器找到了结果。SYN 报文——时间：6.035475s，源IP：71.192.34.104，端口：4335，目的IP：64.233.169.104，端口：80。SYN ACK 报文——时间：6.06775s，源IP：64.233.169.104，端口：80，目的IP：71.192.34.104，端口：4335。
+比对除TCP 校验码以外未见承载的TCP 报文有何不同，除此以外IP 封包不同，原因请见上一题。
+总结：NAT 转换更改TCP 报校验码，IP 封包的生存时间，校验和，发送源IP。
+
+10. 使用您的第 1 到 8 题的答案，做出跟课本类似的HTTP 连接的NAT 转换表。
+答：
+
+<img src ="https://img-blog.csdnimg.cn/ac3653d3a0f34ab18a66100c139e5725.jpeg#pic_center" width = 48%>
+
+
+<img src ="https://img-blog.csdnimg.cn/2b2bbd5cd37644cab5c0629dd579dfce.png#pic_center" width = 48%>
+
+
+11. 在作者上面的抓包结果中，除了上面提到的 HTTP GET 消息和HTTP 200 OK 消息以外，还与其他 Google 服务器有额外的连接，例如，在 NAT_home_side 跟踪文件中，分析时间为1.572315s 的客户端到服务器 GET 消息，以及时间为7.573305s的 GET 消息。仔细研究这两个HTTP 消息的使用并写出说明解释这些消息的目的。
+答: 查阅维基百科以及官方的相关资料，这是谷歌公司开发的一套安全浏览工具用来保证使用他们公司搜索的用户的安全。最常出现情况是使用Chrome 浏览器访问某些网站“此网站可能会损害您的计算机”通知，根据官网说明是这个网站被自动检测系统发现了病毒/木马/漏洞，或者被用来钓鱼造成用户财产盗取隐私泄露问题，因此会有专门的服务器监管这些。这个工具的确起到一些保护用户安全的功能，但是批评者认为有些个人企业等小型网站如果被入侵被检测到就会被提示禁止访问，并且需要恢复重新提交检测才能恢复原状，因此需要花费时间和经历并且等待。
 
