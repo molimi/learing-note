@@ -13,6 +13,8 @@
 #         self.right = right
 class Solution:
     def averageOfLevels(self, root: Optional[TreeNode]) -> List[float]:
+        '''
+        # BFS
         res = []
         que = deque([root])
         while que:
@@ -25,5 +27,21 @@ class Solution:
                 if node.right: que.append(node.right)
             res.append(total/size)
         return res
+        '''
+        # DFS
+        def dfs(root: Optional[TreeNode], level: int) -> List[float]:
+            if not root: return
+            if len(total) < level:          
+                total.append(root.val)
+                count.append(1)
+            else:
+                total[level-1] += root.val
+                count[level-1] += 1
+            dfs(root.left, level+1)
+            dfs(root.right, level+1)
+
+        count, total = [], []
+        dfs(root, 1)
+        return [t/c for t, c in zip(total, count)]
 # @lc code=end
 

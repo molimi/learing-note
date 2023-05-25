@@ -14,6 +14,8 @@
 from collections import deque
 class Solution:
     def maxDepth(self, root: Optional[TreeNode]) -> int:
+        '''
+        # BFS
         if not root: return 0
         que = deque([root])
         depth = 0
@@ -26,5 +28,28 @@ class Solution:
                 if node.right: que.append(node.right)
 
         return depth
+        
+        # DFS 自底向上
+        if not root: return 0
+        # 感受一下这里是将最底层的结果往上抛
+        # 因为这里的递归边界条件是叶子节点
+        left_height = self.maxDepth(root.left)
+        right_height = self.maxDepth(root.right)
+        return max(left_height, right_height) + 1
+        '''
+        res = 0
+        def dfs(root, depth):
+            nonlocal res
+            if not root: return
+            if not root.left and not root.right:
+                res = max(res, depth)
+            dfs(root.left, depth+1)
+            dfs(root.right, depth+1)
+        dfs(root, 1)
+        return res
+
+            
+  
+
 # @lc code=end
 

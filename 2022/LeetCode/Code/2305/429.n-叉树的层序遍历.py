@@ -15,6 +15,8 @@ class Node:
 
 class Solution:
     def levelOrder(self, root: 'Node') -> List[List[int]]:
+        '''
+        # BFS
         if not root: return []
         results = []
         que = deque([root])
@@ -29,6 +31,20 @@ class Solution:
                     que.extend(node.children)
             results.append(result)
         return results
+        '''
+        # DFS
+        def dfs(root, level):
+            if not root: return
+            if len(res) < level:
+                res.append([root.val])
+            else:
+                res[level-1].append(root.val)
+            for child in root.children:
+                dfs(child, level+1)
+
+        res = []
+        dfs(root, 1)
+        return res
         
 # @lc code=end
 

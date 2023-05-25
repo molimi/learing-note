@@ -14,6 +14,8 @@
 from collections import deque
 class Solution:
     def levelOrderBottom(self, root: Optional[TreeNode]) -> List[List[int]]:
+        '''
+        # BFS
         if not root: return []
         results = []
         que = deque([root])
@@ -28,5 +30,19 @@ class Solution:
             results.append(result)
         results.reverse()
         return results
+        '''
+        # DFS
+        def dfs(root, level):
+            if not root: return
+            if len(res) < level:
+                res.append([root.val])
+            else:
+                res[level-1].append(root.val)
+            dfs(root.left, level+1)
+            dfs(root.right, level+1) 
+        
+        res = []
+        dfs(root, 1)
+        return res[::-1]
 # @lc code=end
 
