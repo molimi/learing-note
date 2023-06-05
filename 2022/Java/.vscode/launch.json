@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Derived",
+            "request": "launch",
+            "mainClass": "Derived",
+            "projectName": "Java_6a2400ee"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}",
