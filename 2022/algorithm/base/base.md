@@ -1,5 +1,27 @@
+---
+title: Python数据结构与算法篇（一）-- 算法分析基础
+author: Carpe Diem
+top: false
+abbrlink: db7d7796
+date: 2023-06-06 15:31:11
+tags:
+categories:
+- Python
+- 算法与数据结构
+description:
+img:
+cover:
+coverImg:
+---
+
+近期在学习《数据结构与算法分析Python》，本篇主要介绍算法分析的基础，介绍Python中List和Dic常用操作的时间复杂度，最后用一个变位词的例子比较不同算法的复杂度。
+
+<!--more-->
+
 ## 1 前言
+
 算法分析主要就是从计算资源消耗的角度来评判和比较算法，更高效利用计算资源，或者更少占用计算资源的算法，就是好算法。计算资源主要分为两种，一种是算法解决问题过程中需要的存储空间或内存，另一种是算法的执行时间。
+
 
 **温馨提示：** 存储空间受到问题自身数据规模的变化影响要区分哪些存储空间是问题本身描述所需，哪些是算法占用，这个不容易
 
@@ -21,7 +43,7 @@
   - $O(2^n)$ - 几何级数时间复杂度 - 汉诺塔
   - $O(n!)$ - 阶乘时间复杂度 - 旅行经销商问题 - NPC
 
-<p><center class = "half"><img src ="https://img-blog.csdnimg.cn/9ea4be6b30384daf9b350d347b0e588d.png#pic_left" width = "48%"><img src = "https://img-blog.csdnimg.cn/1deffa20f92d46db8d644b54a14c254b.png#pic_left"  width = "48%"></center></p>
+<p><center class = "half"><img src ="https://cdn.staticaly.com/gh/molimi/image-hosting@main/230526/005.522kgotj5gs0.webp#pic_left" width = "48%"><img src = "https://cdn.staticaly.com/gh/molimi/image-hosting@main/230526/006.wrpp4q8w3s0.webp#pic_left"  width = "48%"></center></p>
 
 
 ## 2 Python数据类型的性能
