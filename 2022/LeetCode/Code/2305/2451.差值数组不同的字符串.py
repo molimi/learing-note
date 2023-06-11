@@ -29,5 +29,6 @@ class Solution:
 s = Solution()
 print(s.oddString(["abm","bcn","alm"]))
 
+
 # @lc code=end
 
